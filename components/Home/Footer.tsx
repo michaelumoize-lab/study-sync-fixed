@@ -54,7 +54,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/notes" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
+                <Link href="/dashboard/vault" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
                   The Vault
                 </Link>
               </li>

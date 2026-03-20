@@ -8,8 +8,11 @@ interface PDFTextItem {
 }
 
 if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  // FIX: serve worker locally instead of from unpkg CDN which can be
+  // blocked by ad blockers, firewalls, or be unavailable offline
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 }
+
 export async function parsePDFFile(file: File) {
   try {
     // 1. Convert file to ArrayBuffer
@@ -32,8 +35,11 @@ export async function parsePDFFile(file: File) {
         let pageText = "";
 
         for (const item of textContent.items) {
-          const textItem = item as PDFTextItem & { transform: number[], width?: number };
-          
+          const textItem = item as PDFTextItem & {
+            transform: number[];
+            width?: number;
+          };
+
           if (
             typeof textItem.str !== "string" ||
             !Array.isArray(textItem.transform) ||
@@ -49,7 +55,7 @@ export async function parsePDFFile(file: File) {
             // Y position changed — new line
             pageText += "\n";
             lastX = null;
-          } else if (lastX !== null && (currentX - lastX) > 2) {
+          } else if (lastX !== null && currentX - lastX > 2) {
             pageText += " ";
           }
 

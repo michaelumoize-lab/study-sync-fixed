@@ -2,8 +2,11 @@
 
 import { ArrowRight, Sparkles, ShieldCheck, Zap, Edit3 } from "lucide-react";
 import Link from "next/link";
+import { authClient } from "@/lib/auth/client";
 
 export default function Hero() {
+  const { data: session } = authClient.useSession();
+
   return (
     <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
       {/* Animated Background Glows */}
@@ -44,10 +47,10 @@ export default function Hero() {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center gap-4 delay-300 animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-both">
               <Link
-                href="/auth/sign-in"
+                href={session ? "/dashboard/vault" : "/auth/sign-in"}
                 className="group w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground font-bold rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 hover:shadow-primary/40 hover:brightness-105 active:scale-95"
               >
-                Create Free Vault
+                {session ? "Go to Vault" : "Create Free Vault"}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
 

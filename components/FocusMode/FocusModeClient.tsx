@@ -21,6 +21,8 @@ import { NoteEditor } from "@/components/Notes/NoteEditor";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { usePostHog } from "posthog-js/react";
+import { apiFetch } from "@/lib/api";
 
 interface NoteStub {
   id: string;
@@ -65,6 +67,8 @@ const TRACKS = [
 ];
 
 export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
+  const posthog = usePostHog();
+
   const [selectedNoteId, setSelectedNoteId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -167,12 +171,17 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
   }, [isMuted, activeTrack]);
 
   const startTimer = (seconds: number) => {
+    posthog.capture("focus_session_started", { duration_seconds: seconds });
     setTimerSeconds(seconds);
     setSelectedPreset(seconds);
     setTimerRunning(true);
   };
 
   const stopTimer = () => {
+    posthog.capture("focus_session_stopped", {
+      seconds_remaining: timerSeconds,
+      duration_seconds: selectedPreset ?? 25 * 60,
+    });
     setTimerRunning(false);
     setTimerSeconds(0);
     setSelectedPreset(null);
@@ -192,7 +201,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
     if (!isDirtyRef.current || !selectedNoteId || !titleRef.current.trim())
       return;
     try {
-      const res = await fetch(`/api/vault/${selectedNoteId}`, {
+      const res = await apiFetch(`/api/vault/${selectedNoteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -217,7 +226,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
     if (!selectedNoteId || !title.trim()) return;
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/vault/${selectedNoteId}`, {
+      const res = await apiFetch(`/api/vault/${selectedNoteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, content }),
@@ -489,7 +498,13 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
               <div className="flex gap-2">
                 {!timerRunning ? (
                   <button
-                    onClick={() => startTimer(selectedPreset ?? 25 * 60)}
+                    onClick={() => {
+                      const preset = selectedPreset ?? 25 * 60;
+                      startTimer(preset);
+                      posthog.capture("focus_session_started", {
+                        duration_seconds: preset,
+                      });
+                    }}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 transition-all"
                   >
                     <Timer className="w-4 h-4" /> Start Focus Session

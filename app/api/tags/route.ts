@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { tags } from "@/lib/schema";
 import { eq, asc } from "drizzle-orm";
+import { readRatelimit, ratelimit } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,13 @@ export async function GET() {
   const { data: session } = await auth.getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success } = await readRatelimit.limit(`tags_read:${session.user.id}`);
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      { status: 429 },
+    );
 
   const rows = await db
     .select()
@@ -27,6 +35,20 @@ export async function POST(req: NextRequest) {
   const { data: session } = await auth.getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success, limit, remaining, reset } = await ratelimit.limit(`tags_write:${session.user.id}`);
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      },
+    );
 
   const { name, color } = await req.json();
 

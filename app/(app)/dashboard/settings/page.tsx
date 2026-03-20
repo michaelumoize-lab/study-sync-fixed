@@ -1,4 +1,4 @@
-// app/dashboard/settings/page.tsx
+// app/(app)/dashboard/settings/page.tsx
 import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import {
@@ -9,7 +9,7 @@ import {
   subjects,
   tags,
 } from "@/lib/schema";
-import { eq, count, isNull } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { SettingsClient } from "@/components/Settings/SettingsClient";
 
@@ -80,6 +80,7 @@ export default async function SettingsPage() {
       initialSettings={settings}
       userEmail={session.user.email ?? ""}
       userName={session.user.name ?? ""}
+      userImage={session.user.image ?? null}   // ← new prop
       stats={stats}
     />
   );

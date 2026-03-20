@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { notes, subjects, tags, noteTags, semesters } from "@/lib/schema";
 import { eq, and, isNotNull, inArray, desc } from "drizzle-orm";
+import { readRatelimit } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = session.user.id;
+
+  const { success } = await readRatelimit.limit(`vault_deleted_read:${userId}`);
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      { status: 429 },
+    );
 
   const rawNotes = await db
     .select({

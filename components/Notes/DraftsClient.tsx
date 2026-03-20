@@ -48,11 +48,7 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
     displayDrafts.every((d) => selectedIds.includes(d.id));
 
   const handleToggleSelectAll = () => {
-    setSelectedIds(
-      allDisplayedSelected
-        ? []
-        : displayDrafts.map((n) => n.id),
-    );
+    setSelectedIds(allDisplayedSelected ? [] : displayDrafts.map((n) => n.id));
   };
 
   // ---------------------------------------------------------------------------
@@ -161,9 +157,7 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
                   )}
                 </div>
                 <span className="text-xs font-bold uppercase tracking-tight">
-                  {allDisplayedSelected
-                    ? "Deselect All"
-                    : "Select All"}
+                  {allDisplayedSelected ? "Deselect All" : "Select All"}
                 </span>
               </button>
               <span className="text-sm font-medium text-muted-foreground">
@@ -199,7 +193,7 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
               <div key={note.id} className="relative group/wrap">
                 {/* Unsaved edit badge — top right so it doesn't clash with NoteCard's built-in checkbox */}
                 {note.hasDraft && note.status === "active" && (
-                  <div className="absolute top-5 right-3 z-20 flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-400/10 text-orange-400 text-[10px] font-black uppercase tracking-wider pointer-events-none">
+                  <div className="absolute top-5 left-15 z-20 flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-400/10 text-orange-400 text-[10px] font-black uppercase tracking-wider pointer-events-none">
                     <FileEdit className="w-3 h-3" /> Unsaved edit
                   </div>
                 )}

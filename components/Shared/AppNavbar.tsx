@@ -7,6 +7,7 @@ import { ModeToggle } from "@/components/Shared/ModeToggle";
 import { SignOutButton } from "@/components/Shared/SignOutButton";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 
 const subscribe = () => () => {};
 const useIsClient = () =>
@@ -24,6 +25,46 @@ function getInitials(name?: string | null, email?: string | null) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+}
+
+// Renders a profile picture if available, falls back to initials avatar
+function Avatar({
+  name,
+  email,
+  image,
+  size = 36,
+}: {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  size?: number;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  const classes =
+    "rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm transition-transform hover:scale-105 overflow-hidden shrink-0";
+  const style = { width: size, height: size };
+
+  if (image && !imgError) {
+    return (
+      <div className={classes} style={style}>
+        <Image
+          src={image}
+          alt={name ?? "User avatar"}
+          width={size}
+          height={size}
+          className="object-cover w-full h-full"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={classes} style={style}>
+      {getInitials(name, email)}
+    </div>
+  );
 }
 
 function VaultStatus() {
@@ -58,14 +99,16 @@ function VaultStatus() {
 function UserMenu({
   name,
   email,
+  image,
 }: {
   name?: string | null;
   email?: string | null;
+  image?: string | null;
 }) {
   return (
     <div className="relative group hidden sm:block">
-      <button className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm transition-transform hover:scale-105">
-        {getInitials(name, email)}
+      <button className="focus:outline-none">
+        <Avatar name={name} email={email} image={image} />
       </button>
       <div className="absolute top-full right-0 mt-2 min-w-[200px] bg-card border border-border rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
         <div className="px-5 py-3 border-b border-border bg-secondary/30">
@@ -77,12 +120,6 @@ function UserMenu({
           </p>
           <p className="text-xs text-muted-foreground truncate">{email}</p>
         </div>
-        <Link
-          href="/account/security"
-          className="flex items-center gap-2 px-5 py-3 w-full text-sm font-semibold hover:bg-secondary border-b border-border transition-colors"
-        >
-          <Shield className="w-4 h-4" /> Security
-        </Link>
         <SignOutButton />
       </div>
     </div>
@@ -133,7 +170,7 @@ export default function AppNavbar({
         isCollapsed ? "md:left-[80px]" : "md:left-[288px]"
       }`}
     >
-      {/* Hamburger — mobile only, opens sidebar fully */}
+      {/* Hamburger — mobile only */}
       <button
         onClick={onMobileSidebarToggle}
         className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-sidebar shadow-sm hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground shrink-0"
@@ -154,7 +191,11 @@ export default function AppNavbar({
 
         {/* Desktop user dropdown */}
         {isClient && session?.user && (
-          <UserMenu name={session.user.name} email={session.user.email} />
+          <UserMenu
+            name={session.user.name}
+            email={session.user.email}
+            image={session.user.image}
+          />
         )}
 
         {/* Mobile avatar dropdown */}
@@ -162,9 +203,13 @@ export default function AppNavbar({
           <div ref={dropdownRef} className="relative sm:hidden">
             <button
               onClick={() => setMobileOpen((v) => !v)}
-              className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm transition-transform hover:scale-105"
+              className="focus:outline-none"
             >
-              {getInitials(session.user.name, session.user.email)}
+              <Avatar
+                name={session.user.name}
+                email={session.user.email}
+                image={session.user.image}
+              />
             </button>
 
             <AnimatePresence>
@@ -184,13 +229,6 @@ export default function AppNavbar({
                       {session.user.email}
                     </p>
                   </div>
-                  <Link
-                    href="/account/security"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors border-b border-border"
-                  >
-                    <Shield className="w-4 h-4" /> Security
-                  </Link>
                   <SignOutButton />
                 </motion.div>
               )}
