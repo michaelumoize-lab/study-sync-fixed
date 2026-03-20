@@ -5,7 +5,7 @@ import { NeonAuthUIProvider } from "@neondatabase/auth/react";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { ThemeProvider } from "@/components/Shared/ThemeProvider";
-import { PostHogProvider } from "./providers";
+import { PostHogProvider } from "./PostHogProvider";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 

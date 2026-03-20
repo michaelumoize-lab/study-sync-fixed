@@ -333,6 +333,7 @@ export const userSettings = pgTable("user_settings", {
   autoSaveInterval: integer("auto_save_interval").default(30),
   studyStreakCount: integer("study_streak_count").default(0),
   lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
+  welcomeEmailSent: boolean("welcome_email_sent").default(false).notNull(), // ← add this
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
