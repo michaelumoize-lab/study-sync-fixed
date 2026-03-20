@@ -2,7 +2,7 @@
 
 import { authClient } from "@/lib/auth/client";
 import { NeonAuthUIProvider } from "@neondatabase/auth/react";
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { ThemeProvider } from "@/components/Shared/ThemeProvider";
 import { PostHogProvider } from "./PostHogProvider";
@@ -13,14 +13,6 @@ const outfit = Outfit({
   variable: "--font-sans",
   subsets: ["latin"],
 });
-
-export const viewport: Viewport = {
-  themeColor: "#aff33e",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-};
 
 export const metadata: Metadata = {
   title: "StudySync | Your Personal Study Vault",
@@ -33,21 +25,6 @@ export const metadata: Metadata = {
     "AI study",
     "student notes",
   ],
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "StudySync",
-  },
-  icons: {
-    icon: [
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [
-      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
   openGraph: {
     title: "StudySync | Your Personal Study Vault",
     description:
@@ -71,13 +48,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${outfit.variable}`}>
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="StudySync" />
-      </head>
       <body className="font-sans antialiased custom-scrollbar">
         <PostHogProvider>
           <ThemeProvider
