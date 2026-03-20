@@ -1,6 +1,7 @@
 // app/api/auth/delete-user/route.ts
 import { auth } from "@/lib/auth/server";
 import { NextResponse } from "next/server";
+import { ratelimit } from "@/lib/ratelimit";
 
 export async function POST() {
   const { data: session } = await auth.getSession();
@@ -8,6 +9,20 @@ export async function POST() {
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { success, limit, remaining, reset } = await ratelimit.limit(`delete_user_write:${session.user.id}`);
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      },
+    );
 
   const { NEON_PROJECT_ID, NEON_BRANCH_ID, NEON_API_KEY } = process.env;
   if (!NEON_PROJECT_ID || !NEON_BRANCH_ID || !NEON_API_KEY) {

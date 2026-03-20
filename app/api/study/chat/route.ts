@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { studySessions, studyMessages, notes } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import Groq from "groq-sdk";
+import { ratelimit } from "@/lib/ratelimit";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -33,6 +34,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = session.user.id;
+
+  const { success, limit, remaining, reset } = await ratelimit.limit(`study_write:${userId}`);
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      },
+    );
   const body = await req.json();
   const { message, sessionId, noteId } = body;
 

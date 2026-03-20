@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { notes, noteTags, subjects, semesters, tags } from "@/lib/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { readRatelimit, ratelimit } from "@/lib/ratelimit";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -13,6 +14,15 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   const { data: session } = await auth.getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success } = await readRatelimit.limit(
+    `vault_read:${session.user.id}`,
+  );
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      { status: 429 },
+    );
 
   const [note] = await db
     .select({
@@ -71,8 +81,28 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { success, limit, remaining, reset } = await ratelimit.limit(
+    `vault_write:${session.user.id}`,
+  );
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      },
+    );
+
   const body = await req.json();
-  const { title, content, status, isPinned, subjectId, tagIds } = body;
+
+  // FIX: semesterId was missing from destructuring and .set() — it was being
+  // silently dropped on every update, so selecting a semester had no effect.
+  const { title, content, status, isPinned, subjectId, semesterId, tagIds } =
+    body;
 
   const [updated] = await db
     .update(notes)
@@ -82,6 +112,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       ...(status !== undefined && { status }),
       ...(isPinned !== undefined && { isPinned }),
       ...(subjectId !== undefined && { subjectId }),
+      ...(semesterId !== undefined && { semesterId }), // FIX: was missing
       updatedAt: new Date(),
     })
     .where(and(eq(notes.id, id), eq(notes.userId, session.user.id)))
@@ -108,6 +139,22 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   const { data: session } = await auth.getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success, limit, remaining, reset } = await ratelimit.limit(
+    `vault_write:${session.user.id}`,
+  );
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      },
+    );
 
   await db
     .update(notes)

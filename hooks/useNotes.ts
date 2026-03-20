@@ -47,9 +47,14 @@ export function useNotes(initialNotes: Note[] = []) {
       });
       if (!res.ok) throw new Error();
       const note: Note = await res.json();
-      setNotes((prev) => [note, ...prev]);
+      if (note.status === "active") {
+        await fetchNotes();
+      }
+
       window.dispatchEvent(new Event("vault-updated"));
-      toast.success("Note captured", { id: loadingToast });
+      toast.success(note.status === "draft" ? "Draft saved" : "Note captured", {
+        id: loadingToast,
+      });
       return true;
     } catch {
       toast.error("Failed to save note", { id: loadingToast });
@@ -60,7 +65,10 @@ export function useNotes(initialNotes: Note[] = []) {
   // ---------------------------------------------------------------------------
   // UPDATE
   // ---------------------------------------------------------------------------
-  const updateNote = async (id: string, input: UpdateNoteInput): Promise<boolean> => {
+  const updateNote = async (
+    id: string,
+    input: UpdateNoteInput,
+  ): Promise<boolean> => {
     try {
       const res = await fetch(`/api/vault/${id}`, {
         method: "PUT",
@@ -145,7 +153,7 @@ export function useNotes(initialNotes: Note[] = []) {
       });
       if (!res.ok) throw new Error();
       setNotes((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isPinned: !isPinned } : n))
+        prev.map((n) => (n.id === id ? { ...n, isPinned: !isPinned } : n)),
       );
       toast.success(isPinned ? "Unpinned" : "Pinned to top");
       return true;

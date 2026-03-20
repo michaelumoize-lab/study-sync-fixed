@@ -1,7 +1,7 @@
 "use client";
 // components/Settings/SettingsClient.tsx
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   User,
@@ -16,6 +16,8 @@ import {
   LogOut,
   Shield,
   Check,
+  Camera,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -24,6 +26,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { DeleteAccountCard } from "@neondatabase/auth/react";
+import Image from "next/image";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,6 +53,7 @@ interface SettingsClientProps {
   initialSettings: UserSettingsData;
   userEmail: string;
   userName: string;
+  userImage?: string | null;
   stats: Stats;
 }
 
@@ -84,7 +88,7 @@ function Section({
 }
 
 // ---------------------------------------------------------------------------
-// Option button (used for theme, font, view selectors)
+// Option button
 // ---------------------------------------------------------------------------
 
 function OptionButton({
@@ -132,6 +136,181 @@ function OptionButton({
 }
 
 // ---------------------------------------------------------------------------
+// Avatar uploader
+// ---------------------------------------------------------------------------
+
+function AvatarUploader({
+  currentImage,
+  initials,
+  onUploaded,
+}: {
+  currentImage?: string | null;
+  initials: string;
+  onUploaded: (url: string) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // Always tracks the most recent live URL (uploaded this session or the initial one)
+  const liveUrlRef = useRef<string | null>(currentImage ?? null);
+
+  const displayImage = preview ?? (imgError ? null : currentImage);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED.includes(file.type)) {
+      toast.error("Only JPEG, PNG, WebP or GIF allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File too large. Max 5 MB.");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    setImgError(false);
+    setUploading(true);
+    const toastId = toast.loading("Uploading avatar...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Pass the current live URL so the server can delete the old blob
+      if (liveUrlRef.current?.includes("vercel-storage.com")) {
+        formData.append("oldUrl", liveUrlRef.current);
+      }
+
+      const res = await fetch("/api/upload/avatar", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error ?? "Upload failed");
+      }
+      const { url } = await res.json();
+
+      const { error: updateError } = await authClient.updateUser({ image: url });
+      if (updateError) throw new Error(updateError.message);
+
+      // Update the live URL ref so subsequent uploads/removals use the new URL
+      liveUrlRef.current = url;
+      onUploaded(url);
+      toast.success("Avatar updated!", { id: toastId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Avatar upload failed", {
+        id: toastId,
+      });
+      setPreview(null);
+      URL.revokeObjectURL(objectUrl);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemove = async () => {
+    setUploading(true);
+    const toastId = toast.loading("Removing avatar...");
+    try {
+      // Delete from Vercel Blob if it's a Vercel URL
+      if (liveUrlRef.current?.includes("vercel-storage.com")) {
+        const res = await fetch("/api/upload/avatar", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: liveUrlRef.current }),
+        });
+        if (!res.ok) throw new Error("Failed to delete blob");
+      }
+
+      // Clear from Neon Auth
+      const { error } = await authClient.updateUser({ image: "" });
+      if (error) throw new Error(error.message);
+
+      liveUrlRef.current = null;
+      setPreview(null);
+      setImgError(false);
+      onUploaded("");
+      toast.success("Avatar removed", { id: toastId });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not remove avatar",
+        { id: toastId },
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-5">
+      <div className="relative shrink-0">
+        <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-xl overflow-hidden">
+          {displayImage ? (
+            <Image
+              src={displayImage}
+              alt="Avatar"
+              width={64}
+              height={64}
+              className="object-cover w-full h-full"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            initials
+          )}
+        </div>
+        {uploading && (
+          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 text-white animate-spin" />
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-secondary border border-border hover:border-primary/30 text-sm font-bold transition-all disabled:opacity-50"
+        >
+          <Camera className="w-4 h-4" />
+          {displayImage ? "Change photo" : "Upload photo"}
+        </button>
+
+        {displayImage && (
+          <button
+            onClick={handleRemove}
+            disabled={uploading}
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 text-destructive text-sm font-bold transition-all disabled:opacity-50"
+          >
+            <X className="w-4 h-4" />
+            Remove photo
+          </button>
+        )}
+
+        <p className="text-[10px] text-muted-foreground">
+          JPEG, PNG, WebP or GIF · max 5 MB
+        </p>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main SettingsClient
 // ---------------------------------------------------------------------------
 
@@ -139,9 +318,10 @@ export function SettingsClient({
   initialSettings,
   userEmail,
   userName,
+  userImage,
   stats,
 }: SettingsClientProps) {
-  const { setTheme, theme: currentTheme } = useTheme();
+  const { setTheme } = useTheme();
   const router = useRouter();
 
   const [theme, setThemeLocal] = useState(initialSettings.theme ?? "system");
@@ -153,6 +333,8 @@ export function SettingsClient({
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Track current avatar URL so the profile card reflects uploads instantly
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(userImage ?? null);
 
   const applyTheme = (t: string) => {
     setThemeLocal(t);
@@ -165,11 +347,7 @@ export function SettingsClient({
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          theme,
-          editorFont,
-          autoSaveInterval,
-        }),
+        body: JSON.stringify({ theme, editorFont, autoSaveInterval }),
       });
       if (!res.ok) throw new Error();
       setSaved(true);
@@ -209,15 +387,35 @@ export function SettingsClient({
 
       {/* Profile */}
       <Section title="Profile" icon={User}>
-        <div className="flex items-center gap-4 p-4 bg-secondary/30 rounded-2xl">
-          <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-xl shrink-0">
-            {initials}
+        {/* Avatar uploader */}
+        <AvatarUploader
+          currentImage={avatarUrl}
+          initials={initials}
+          onUploaded={(url) => setAvatarUrl(url || null)}
+        />
+
+        {/* Name / email summary */}
+        <div className="flex items-center gap-4 p-4 bg-secondary/30 rounded-2xl mt-4">
+          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-base shrink-0 overflow-hidden">
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt="Avatar"
+                width={40}
+                height={40}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              initials
+            )}
           </div>
-          <div>
-            <p className="font-bold text-foreground text-base">
+          <div className="min-w-0">
+            <p className="font-bold text-foreground text-base truncate">
               {userName || "User"}
             </p>
-            <p className="text-sm text-muted-foreground">{userEmail}</p>
+            <p className="text-sm text-muted-foreground truncate">
+              {userEmail}
+            </p>
           </div>
         </div>
 
@@ -295,7 +493,6 @@ export function SettingsClient({
       {/* Editor Preferences */}
       <Section title="Editor" icon={StickyNote}>
         <div className="space-y-5">
-          {/* Auto-save interval */}
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-2">
               Auto-save Interval —{" "}
@@ -357,7 +554,7 @@ export function SettingsClient({
         </div>
       </Section>
 
-      {/* Save button — sticky at bottom */}
+      {/* Save button */}
       <div className="sticky bottom-6 flex justify-end">
         <button
           onClick={handleSave}

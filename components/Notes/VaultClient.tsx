@@ -18,6 +18,8 @@ import { PdfImportModal } from "@/components/Notes/PdfImportModal";
 import { useNotes } from "@/hooks/useNotes";
 import { Note } from "@/types/note";
 import toast from "react-hot-toast";
+import { apiFetch } from "@/lib/api";
+import { CreateNoteInput } from "@/types/note";
 
 interface Subject {
   id: string;
@@ -110,6 +112,24 @@ export function VaultClient({
     }
   };
 
+  const handleSaveDraft = async (input: CreateNoteInput): Promise<boolean> => {
+    const t = toast.loading("Saving draft...");
+    try {
+      const res = await apiFetch("/api/vault", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...input, status: "draft" }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Draft saved", { id: t });
+      return true;
+    } catch {
+      toast.error("Failed to save draft", { id: t });
+      return false;
+    }
+    // NOTE: intentionally does NOT call setNotes — drafts don't belong in vault
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
@@ -137,7 +157,7 @@ export function VaultClient({
       {!searchQuery && (
         <CreateNote
           onAdd={addNote}
-          onSaveDraft={addNote}
+          onSaveDraft={handleSaveDraft}
           subjects={subjects}
           semesters={semesters}
           tags={tags}

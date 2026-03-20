@@ -16,6 +16,7 @@ import { useNotes } from "@/hooks/useNotes";
 import { useStudyStreak } from "@/hooks/useStudyStreak";
 import { motion, type Variants } from "framer-motion";
 import { useMemo, useEffect, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -186,9 +187,19 @@ function ActionCard({
 
 interface WelcomePageClientProps {
   firstName: string;
+  userId: string;
+  email: string;
 }
 
-export function WelcomePageClient({ firstName }: WelcomePageClientProps) {
+export function WelcomePageClient({ firstName, userId, email }: WelcomePageClientProps) {
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    if (userId) {
+      posthog.identify(userId, { email, name: firstName });
+    }
+  }, [userId]);
+
   const { notes, loading } = useNotes();
   const streak = useStudyStreak();
   const greeting = useMemo(() => getGreeting(), []);

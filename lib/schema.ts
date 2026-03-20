@@ -1,6 +1,7 @@
 // lib/schema.ts
 import {
   pgTable,
+  pgSchema,
   text,
   uuid,
   timestamp,
@@ -12,6 +13,17 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+
+// ---------------------------------------------------------------------------
+// neon_auth schema reference — Drizzle does NOT manage this schema.
+// We declare it only so we can reference neon_auth.user as a FK target.
+// ---------------------------------------------------------------------------
+
+const neonAuth = pgSchema("neon_auth");
+
+export const neonAuthUsers = neonAuth.table("user", {
+  id: uuid("id").primaryKey(),
+});
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -40,7 +52,9 @@ export const subjects = pgTable("subjects", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
   color: text("color"),
@@ -53,7 +67,7 @@ export const subjects = pgTable("subjects", {
     .notNull(),
 }, (t) => [
   index("subjects_user_id_idx").on(t.userId),
-  uniqueIndex("subjects_name_user_idx").on(t.userId, t.name)
+  uniqueIndex("subjects_name_user_idx").on(t.userId, t.name),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -64,7 +78,9 @@ export const semesters = pgTable("semesters", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   startDate: timestamp("start_date", { withTimezone: true }),
   endDate: timestamp("end_date", { withTimezone: true }),
@@ -74,7 +90,7 @@ export const semesters = pgTable("semesters", {
     .notNull(),
 }, (t) => [
   index("semesters_user_id_idx").on(t.userId),
-  uniqueIndex("semesters_name_user_idx").on(t.userId, t.name)
+  uniqueIndex("semesters_name_user_idx").on(t.userId, t.name),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -85,7 +101,9 @@ export const tags = pgTable("tags", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   color: text("color"),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -93,7 +111,7 @@ export const tags = pgTable("tags", {
     .notNull(),
 }, (t) => [
   index("tags_user_id_idx").on(t.userId),
-  uniqueIndex("tags_name_user_idx").on(t.userId, t.name)
+  uniqueIndex("tags_name_user_idx").on(t.userId, t.name),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -104,7 +122,9 @@ export const notes = pgTable("notes", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   subjectId: text("subject_id").references(() => subjects.id, {
     onDelete: "set null",
   }),
@@ -132,7 +152,7 @@ export const notes = pgTable("notes", {
 }, (t) => [
   index("notes_user_id_idx").on(t.userId),
   index("notes_subject_id_idx").on(t.subjectId),
-  index("notes_semester_id_idx").on(t.semesterId)
+  index("notes_semester_id_idx").on(t.semesterId),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -148,7 +168,7 @@ export const noteTags = pgTable("note_tags", {
     .references(() => tags.id, { onDelete: "cascade" }),
 }, (t) => [
   primaryKey({ columns: [t.noteId, t.tagId] }),
-  index("note_tags_note_tag_idx").on(t.noteId, t.tagId)
+  index("note_tags_note_tag_idx").on(t.noteId, t.tagId),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -159,7 +179,9 @@ export const templates = pgTable("templates", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
   content: text("content"),
@@ -171,7 +193,7 @@ export const templates = pgTable("templates", {
     .notNull(),
 }, (t) => [
   index("templates_user_id_idx").on(t.userId),
-  uniqueIndex("templates_name_user_idx").on(t.userId, t.name)
+  uniqueIndex("templates_name_user_idx").on(t.userId, t.name),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -182,7 +204,9 @@ export const flashcardDecks = pgTable("flashcard_decks", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   noteId: text("note_id").references(() => notes.id, { onDelete: "set null" }),
   subjectId: text("subject_id").references(() => subjects.id, {
     onDelete: "set null",
@@ -199,7 +223,7 @@ export const flashcardDecks = pgTable("flashcard_decks", {
   index("flashcard_decks_user_id_idx").on(t.userId),
   index("flashcard_decks_note_id_idx").on(t.noteId),
   index("flashcard_decks_subject_id_idx").on(t.subjectId),
-  uniqueIndex("flashcard_decks_name_user_idx").on(t.userId, t.name)
+  uniqueIndex("flashcard_decks_name_user_idx").on(t.userId, t.name),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -225,7 +249,7 @@ export const flashcards = pgTable("flashcards", {
     .defaultNow()
     .notNull(),
 }, (t) => [
-  index("flashcards_deck_id_idx").on(t.deckId)
+  index("flashcards_deck_id_idx").on(t.deckId),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -236,7 +260,9 @@ export const studySessions = pgTable("study_sessions", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   noteId: text("note_id").references(() => notes.id, { onDelete: "set null" }),
   title: text("title"),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -247,7 +273,7 @@ export const studySessions = pgTable("study_sessions", {
     .notNull(),
 }, (t) => [
   index("study_sessions_user_id_idx").on(t.userId),
-  index("study_sessions_note_id_idx").on(t.noteId)
+  index("study_sessions_note_id_idx").on(t.noteId),
 ]);
 
 export const studyMessages = pgTable("study_messages", {
@@ -263,7 +289,7 @@ export const studyMessages = pgTable("study_messages", {
     .defaultNow()
     .notNull(),
 }, (t) => [
-  index("study_messages_session_id_idx").on(t.sessionId)
+  index("study_messages_session_id_idx").on(t.sessionId),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -274,7 +300,9 @@ export const scheduleEvents = pgTable("schedule_events", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   subjectId: text("subject_id").references(() => subjects.id, {
     onDelete: "set null",
   }),
@@ -288,7 +316,7 @@ export const scheduleEvents = pgTable("schedule_events", {
     .notNull(),
 }, (t) => [
   index("schedule_events_user_id_idx").on(t.userId),
-  index("schedule_events_subject_id_idx").on(t.subjectId)
+  index("schedule_events_subject_id_idx").on(t.subjectId),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -296,7 +324,9 @@ export const scheduleEvents = pgTable("schedule_events", {
 // ---------------------------------------------------------------------------
 
 export const userSettings = pgTable("user_settings", {
-  userId: uuid("user_id").primaryKey(),
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   theme: text("theme").default("system"),
   defaultView: text("default_view").default("vault"),
   editorFont: text("editor_font").default("outfit"),

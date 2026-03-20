@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { tags } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
+import { ratelimit } from "@/lib/ratelimit";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -13,6 +14,20 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
   const { data: session } = await auth.getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success, limit, remaining, reset } = await ratelimit.limit(`tags_write:${session.user.id}`);
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      },
+    );
 
   // FIX 1: Wrap req.json() in try/catch — a missing or malformed body throws
   // a SyntaxError that would otherwise crash the route with an unhandled 500.
@@ -61,6 +76,20 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   const { data: session } = await auth.getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success, limit, remaining, reset } = await ratelimit.limit(`tags_write:${session.user.id}`);
+  if (!success)
+    return NextResponse.json(
+      { error: "Too many requests, slow down" },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+        },
+      },
+    );
 
   await db
     .delete(tags)
