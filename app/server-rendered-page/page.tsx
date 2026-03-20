@@ -13,7 +13,7 @@ export default async function ServerRenderedPage() {
       <p className="text-gray-400">
         Authenticated:{' '}
         <span className={session ? 'text-green-500' : 'text-red-500'}>
-          {session ? 'Yes' : 'No'}
+          {session ? 'Yess' : 'No'}
         </span>
       </p>
 
