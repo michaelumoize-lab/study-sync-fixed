@@ -15,9 +15,30 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "StudySync | Your Personal Vault",
+  title: "StudySync | Your Personal Study Vault",
   description:
-    "Capture everything, forget nothing. Write rich notes, chat with your content using AI, organize by subject, and build a personal vault of knowledge that grows with you — built for serious learners who want to study smarter, not harder.",
+    "Capture notes, chat with AI, create flashcards, and build your personal knowledge vault. The smarter way to study.",
+  keywords: [
+    "study app",
+    "note taking",
+    "flashcards",
+    "AI study",
+    "student notes",
+  ],
+  openGraph: {
+    title: "StudySync | Your Personal Study Vault",
+    description:
+      "Capture notes, chat with AI, create flashcards and study smarter.",
+    url: "https://studysync.website",
+    siteName: "StudySync",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "StudySync | Your Personal Study Vault",
+    description:
+      "Capture notes, chat with AI, create flashcards and study smarter.",
+  },
 };
 
 export default function RootLayout({
