@@ -59,10 +59,40 @@ const TRACKS = [
     url: "https://www.youtube.com/embed/lTRiuFIWV54?autoplay=1&loop=1&playlist=lTRiuFIWV54",
   },
   {
-    id: "space",
-    label: "Space Ambient",
-    emoji: "🌌",
-    url: "https://www.youtube.com/embed/H-iCZElJ8m0?autoplay=1&loop=1&playlist=H-iCZElJ8m0",
+    id: "jazz",
+    label: "Jazz Cafe",
+    emoji: "🎷",
+    url: "https://www.youtube.com/embed/Dx5qFachd3A?autoplay=1&loop=1&playlist=Dx5qFachd3A",
+  },
+  {
+    id: "classical",
+    label: "Classical Focus",
+    emoji: "🎻",
+    url: "https://www.youtube.com/embed/mUSZ9JGLNtA?autoplay=1&loop=1&playlist=mUSZ9JGLNtA",
+  },
+  {
+    id: "deepfocus",
+    label: "Deep Focus",
+    emoji: "🧠",
+    url: "https://www.youtube.com/embed/9YhFhsTzmJ8?autoplay=1&loop=1&playlist=9YhFhsTzmJ8",
+  },
+  {
+    id: "nature",
+    label: "Ocean Waves",
+    emoji: "🌊",
+    url: "https://www.youtube.com/embed/bn9F19Hi1Lk?autoplay=1&loop=1&playlist=bn9F19Hi1Lk",
+  },
+  {
+    id: "piano",
+    label: "Solo Piano",
+    emoji: "🎹",
+    url: "https://www.youtube.com/embed/4oStw0r33so?autoplay=1&loop=1&playlist=4oStw0r33so",
+  },
+  {
+    id: "hiphop",
+    label: "Study Hip-Hop",
+    emoji: "🎧",
+    url: "https://www.youtube.com/embed/n8X9_MgEdCg?autoplay=1&loop=1&playlist=n8X9_MgEdCg",
   },
 ];
 
@@ -132,6 +162,9 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
         setTimerSeconds((s) => {
           if (s <= 1) {
             setTimerRunning(false);
+            posthog.capture("focus_session_completed", {
+              duration_seconds: selectedPreset ?? 25 * 60,
+            });
             toast.success("⏰ Focus session complete!", { duration: 5000 });
             return 0;
           }
@@ -211,6 +244,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
       });
       if (res.ok) {
         isDirtyRef.current = false;
+        posthog.capture("note_saved", { method: "auto" });
         setAutoSaved(true);
         setTimeout(() => setAutoSaved(false), 2000);
       }
@@ -233,6 +267,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
       });
       if (res.ok) {
         isDirtyRef.current = false;
+        posthog.capture("note_saved", { method: "manual" });
         toast.success("Note saved");
       } else {
         toast.error("Save failed");

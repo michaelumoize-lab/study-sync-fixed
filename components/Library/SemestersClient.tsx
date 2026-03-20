@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePostHog } from "posthog-js/react";
 import {
   GraduationCap,
   Plus,
@@ -386,6 +387,7 @@ interface SemestersClientProps {
 }
 
 export function SemestersClient({ initialSemesters }: SemestersClientProps) {
+  const posthog = usePostHog();
   const [semestersList, setSemestersList] =
     useState<Semester[]>(initialSemesters);
   const [searchQuery, setSearchQuery] = useState("");
@@ -424,6 +426,7 @@ export function SemestersClient({ initialSemesters }: SemestersClientProps) {
         return [{ ...created, noteCount: 0 }, ...updated];
       });
       setModalOpen(false);
+      posthog.capture("semester_created", { name: data.name });
       toast.success("Semester created", { id: t });
     } catch {
       toast.error("Failed to create semester", { id: t });

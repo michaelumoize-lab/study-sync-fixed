@@ -15,7 +15,7 @@ import {
 import { useNotes } from "@/hooks/useNotes";
 import { useStudyStreak } from "@/hooks/useStudyStreak";
 import { motion, type Variants } from "framer-motion";
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { usePostHog } from "posthog-js/react";
 
 // ---------------------------------------------------------------------------
@@ -187,25 +187,31 @@ function ActionCard({
 
 interface WelcomePageClientProps {
   firstName: string;
-  userId: string;
-  email: string;
+  userEmail: string;
+  userName: string;
+  userCreatedAt: string;
 }
 
-export function WelcomePageClient({ firstName, userId, email }: WelcomePageClientProps) {
+export function WelcomePageClient({
+  firstName,
+  userEmail,
+  userName,
+  userCreatedAt,
+}: WelcomePageClientProps) {
   const posthog = usePostHog();
 
   useEffect(() => {
-    if (userId) {
-      posthog.identify(userId, { email, name: firstName });
-    }
-  }, [userId]);
+    posthog.identify(userEmail, { email: userEmail, name: userName });
+  }, [posthog, userEmail, userName]);
 
   const { notes, loading } = useNotes();
   const streak = useStudyStreak();
   const greeting = useMemo(() => getGreeting(), []);
+  const emailSentRef = useRef(false);
 
   const [subjectCount, setSubjectCount] = useState(0);
   const [subjectsLoading, setSubjectsLoading] = useState(true);
+
   useEffect(() => {
     fetch("/api/subjects")
       .then((r) => r.json())
@@ -213,6 +219,28 @@ export function WelcomePageClient({ firstName, userId, email }: WelcomePageClien
       .catch((err) => console.error("Failed to fetch subjects:", err))
       .finally(() => setSubjectsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (emailSentRef.current) return;
+    emailSentRef.current = true;
+
+    const storageKey = `welcome_sent_${userEmail}`;
+    if (localStorage.getItem(storageKey)) return;
+
+    fetch("/api/email/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: userName, email: userEmail }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          localStorage.setItem(storageKey, "1");
+        }
+      })
+      .catch(() => {});
+  }, [userEmail, userName]);
+
   return (
     <motion.div
       className="w-full max-w-4xl mx-auto px-6 pt-28 pb-16 font-outfit flex flex-col items-center"
@@ -251,7 +279,11 @@ export function WelcomePageClient({ firstName, userId, email }: WelcomePageClien
         <div className="inline-flex items-center gap-5 px-6 py-3 bg-secondary/30 rounded-2xl border border-border/50">
           <StatItem value={notes.length} label="Notes" loading={loading} />
           <div className="h-6 w-px bg-border" />
-          <StatItem value={subjectCount} label="Subjects" loading={subjectsLoading} />
+          <StatItem
+            value={subjectCount}
+            label="Subjects"
+            loading={subjectsLoading}
+          />
           <div className="h-6 w-px bg-border" />
           <StatItem
             value={streak !== null ? `${streak}d` : ""}

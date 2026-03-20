@@ -2,6 +2,7 @@
 // components/Notes/RecentlyDeletedClient.tsx
 
 import { useState, useMemo } from "react";
+import { usePostHog } from "posthog-js/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, RotateCcw, Ghost, Check, AlertTriangle } from "lucide-react";
 import { Note } from "@/types/note";
@@ -219,6 +220,7 @@ export function RecentlyDeletedClient({
     type: "restore" | "delete" | "restoreAll" | "deleteAll" | null;
     noteId?: string;
   }>({ open: false, type: null });
+  const posthog = usePostHog();
 
   const displayNotes = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -252,6 +254,7 @@ export function RecentlyDeletedClient({
       if (!res.ok) throw new Error();
       setNotes((prev) => prev.filter((n) => n.id !== id));
       setSelectedIds((prev) => prev.filter((i) => i !== id));
+      posthog.capture("note_restored", { note_id: id });
       toast.success("Note restored to vault", { id: t });
       window.dispatchEvent(new Event("vault-updated"));
     } catch {
@@ -266,6 +269,7 @@ export function RecentlyDeletedClient({
       if (!res.ok) throw new Error();
       setNotes((prev) => prev.filter((n) => n.id !== id));
       setSelectedIds((prev) => prev.filter((i) => i !== id));
+      posthog.capture("note_permanently_deleted", { note_id: id });
       toast.success("Note permanently deleted", { id: t });
     } catch {
       toast.error("Delete failed", { id: t });
@@ -282,6 +286,7 @@ export function RecentlyDeletedClient({
       });
       if (!res.ok) throw new Error();
       setNotes((prev) => prev.filter((n) => !selectedIds.includes(n.id)));
+      posthog.capture("bulk_notes_restored", { count: selectedIds.length });
       toast.success(`${selectedIds.length} notes restored`, { id: t });
       setSelectedIds([]);
       window.dispatchEvent(new Event("vault-updated"));
@@ -300,6 +305,7 @@ export function RecentlyDeletedClient({
       });
       if (!res.ok) throw new Error();
       setNotes((prev) => prev.filter((n) => !selectedIds.includes(n.id)));
+      posthog.capture("bulk_notes_deleted", { count: selectedIds.length });
       toast.success(`${selectedIds.length} notes permanently deleted`, {
         id: t,
       });

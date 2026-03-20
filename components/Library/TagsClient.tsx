@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePostHog } from "posthog-js/react";
 import {
   Tag,
   Plus,
@@ -295,6 +296,7 @@ interface TagsClientProps {
 }
 
 export function TagsClient({ initialTags }: TagsClientProps) {
+  const posthog = usePostHog();
   const [tagsList, setTagsList] = useState<TagItem[]>(initialTags);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -324,6 +326,7 @@ export function TagsClient({ initialTags }: TagsClientProps) {
         ),
       );
       setModalOpen(false);
+      posthog.capture("tag_created", { name: data.name });
       toast.success("Tag created", { id: t });
     } catch {
       toast.error("Failed to create tag", { id: t });

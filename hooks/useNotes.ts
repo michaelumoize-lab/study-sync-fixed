@@ -3,11 +3,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import { usePostHog } from "posthog-js/react";
 import { Note, CreateNoteInput, UpdateNoteInput } from "@/types/note";
 
 export function useNotes(initialNotes: Note[] = []) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [loading, setLoading] = useState(initialNotes.length === 0);
+  const posthog = usePostHog();
 
   // ---------------------------------------------------------------------------
   // FETCH
@@ -52,6 +54,7 @@ export function useNotes(initialNotes: Note[] = []) {
       }
 
       window.dispatchEvent(new Event("vault-updated"));
+      posthog.capture("note_created", { title: input.title });
       toast.success(note.status === "draft" ? "Draft saved" : "Note captured", {
         id: loadingToast,
       });
@@ -113,6 +116,7 @@ export function useNotes(initialNotes: Note[] = []) {
       if (!res.ok) throw new Error();
       setNotes((prev) => prev.filter((n) => n.id !== id));
       window.dispatchEvent(new Event("vault-updated"));
+      posthog.capture("note_deleted", { note_id: id });
       toast.success("Note moved to Recently Deleted");
       return true;
     } catch {
@@ -134,6 +138,8 @@ export function useNotes(initialNotes: Note[] = []) {
       if (!res.ok) throw new Error();
       setNotes((prev) => prev.filter((n) => !ids.includes(n.id)));
       window.dispatchEvent(new Event("vault-updated"));
+      posthog.capture("bulk_notes_deleted", { count: ids.length });
+      toast.success(`${ids.length} notes moved to Recently Deleted`);
       return true;
     } catch {
       toast.error("Bulk delete failed");

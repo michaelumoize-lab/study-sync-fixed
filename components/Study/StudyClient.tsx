@@ -2,6 +2,7 @@
 // components/Study/StudyClient.tsx
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { usePostHog } from "posthog-js/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -287,6 +288,7 @@ function SessionItem({
 // ---------------------------------------------------------------------------
 
 export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = false }: StudyClientProps) {
+  const posthog = usePostHog();
   const [sessions, setSessions] = useState<ChatSession[]>(initialSessions);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -403,6 +405,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
 
       if (!res.ok) throw new Error("Failed to get response");
 
+      posthog.capture("ai_chat_message_sent", { message_length: text.length });
       setMessages((prev) => [...prev, assistantMsg]);
 
       const reader = res.body!.getReader();

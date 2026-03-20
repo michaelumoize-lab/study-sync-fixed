@@ -2,6 +2,7 @@
 // components/Library/SubjectsClient.tsx
 
 import { useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
@@ -317,6 +318,7 @@ interface SubjectsClientProps {
 }
 
 export function SubjectsClient({ initialSubjects }: SubjectsClientProps) {
+  const posthog = usePostHog();
   const [subjectsList, setSubjectsList] = useState<Subject[]>(initialSubjects);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -352,6 +354,7 @@ export function SubjectsClient({ initialSubjects }: SubjectsClientProps) {
         ),
       );
       setModalOpen(false);
+      posthog.capture("subject_created", { name: data.name });
       toast.success("Subject created", { id: t });
     } catch {
       toast.error("Failed to create subject", { id: t });
