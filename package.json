@@ -22,7 +22,6 @@
     "drizzle-orm": "^0.45.1",
     "framer-motion": "^12.38.0",
     "groq-sdk": "^1.1.1",
-    "isomorphic-dompurify": "^3.5.1",
     "lucide-react": "^0.577.0",
     "marked": "^17.0.4",
     "next": "16.1.7",
@@ -38,7 +37,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/dompurify": "^3.0.5",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",

@@ -3,17 +3,57 @@ import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { notes } from "@/lib/schema";
 import Groq from "groq-sdk";
-import DOMPurify from "isomorphic-dompurify";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export const dynamic = "force-dynamic";
 
-// Matches UUID v4 and common numeric/cuid DB IDs
 const VALID_ID_RE = /^[a-zA-Z0-9_-]{1,128}$/;
-
 const MAX_TITLE_LENGTH = 500;
 const MAX_CONTENT_LENGTH = 100_000;
+
+// ---------------------------------------------------------------------------
+// Allowlist-based HTML sanitizer — no DOM dependency needed server-side.
+// Strips every tag not in the allowed set and removes all event-handler
+// attributes and javascript: hrefs before storing AI-generated HTML.
+// ---------------------------------------------------------------------------
+const ALLOWED_TAGS = new Set([
+  "h1","h2","h3","h4","h5","h6",
+  "p","br","hr",
+  "strong","b","em","i","u","s","strike","mark","small","sub","sup",
+  "ul","ol","li",
+  "blockquote","pre","code",
+  "table","thead","tbody","tr","th","td",
+  "a","span","div","section","article",
+]);
+
+function sanitizeHtml(html: string): string {
+  return (
+    html
+      // Remove entire dangerous tags + their contents
+      .replace(
+        /<(script|style|iframe|object|embed|form|input|textarea|button|select|meta|link|base)[^>]*>[\s\S]*?<\/\1>/gi,
+        "",
+      )
+      // Remove self-closing variants of the above
+      .replace(
+        /<(script|style|iframe|object|embed|form|input|textarea|button|select|meta|link|base)[^>]*\/?>/gi,
+        "",
+      )
+      // Strip any remaining tags not in the allowlist
+      .replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g, (match, tag: string) => {
+        if (ALLOWED_TAGS.has(tag.toLowerCase())) {
+          // Keep the tag but scrub dangerous attributes
+          return match
+            .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, "")
+            .replace(/\s+href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, "")
+            .replace(/\s+src\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, "")
+            .replace(/\s+action\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, "");
+        }
+        return ""; // drop disallowed tags entirely
+      })
+  );
+}
 
 export async function POST(req: NextRequest) {
   const { data: session } = await auth.getSession();
@@ -110,13 +150,7 @@ Important rules:
       clearTimeout(timeoutId);
 
       const raw = completion.choices[0]?.message?.content || content;
-      // Sanitize AI-generated HTML: strip scripts, event handlers, and
-      // any other potentially dangerous markup before storing or returning.
-      formattedContent = DOMPurify.sanitize(raw, {
-        USE_PROFILES: { html: true },
-        FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "form"],
-        FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "action"],
-      });
+      formattedContent = sanitizeHtml(raw);
     }
 
     // 2. Save to database

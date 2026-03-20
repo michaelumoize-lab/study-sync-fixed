@@ -44,7 +44,7 @@ export default function Hero() {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center gap-4 delay-300 animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-both">
               <Link
-                href="/signup"
+                href="/auth/sign-in"
                 className="group w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground font-bold rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 hover:shadow-primary/40 hover:brightness-105 active:scale-95"
               >
                 Create Free Vault

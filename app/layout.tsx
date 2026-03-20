@@ -15,7 +15,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "StudySync | Your Personal Vault",
-  description: "Secure, personal study sync and vault.",
+  description: "Capture everything, forget nothing. Write rich notes, chat with your content using AI, organize by subject, and build a personal vault of knowledge that grows with you — built for serious learners who want to study smarter, not harder.",
 };
 
 export default function RootLayout({
