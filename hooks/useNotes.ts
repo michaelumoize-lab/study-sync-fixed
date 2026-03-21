@@ -111,16 +111,17 @@ export function useNotes(initialNotes: Note[] = []) {
   // SOFT DELETE (moves to recently deleted)
   // ---------------------------------------------------------------------------
   const deleteNote = async (id: string): Promise<boolean> => {
+    const t = toast.loading("Moving to Recently Deleted...");
     try {
       const res = await fetch(`/api/vault/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setNotes((prev) => prev.filter((n) => n.id !== id));
       window.dispatchEvent(new Event("vault-updated"));
       posthog.capture("note_deleted", { note_id: id });
-      toast.success("Note moved to Recently Deleted");
+      toast.success("Note moved to Recently Deleted", { id: t });
       return true;
     } catch {
-      toast.error("Could not delete note");
+      toast.error("Could not delete note", { id: t });
       return false;
     }
   };

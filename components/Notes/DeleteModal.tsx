@@ -1,6 +1,7 @@
 "use client";
 // components/Notes/DeleteModal.tsx
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2 } from "lucide-react";
 
@@ -19,6 +20,17 @@ export function DeleteModal({
   title = "Delete Note?",
   description = "This action cannot be undone. This note will be moved to Recently Deleted.",
 }: DeleteModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirm = async () => {
+  setIsDeleting(true);
+  try {
+    await onConfirm();
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -46,13 +58,15 @@ export function DeleteModal({
             <div className="flex gap-3 mt-8">
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3 rounded-2xl font-bold bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                disabled={isDeleting}
+                className="flex-1 px-6 py-3 rounded-2xl font-bold bg-secondary text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                onClick={onConfirm}
-                className="flex-1 px-6 py-3 rounded-2xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all shadow-lg shadow-destructive/20"
+                onClick={handleConfirm}
+                disabled={isDeleting}
+                className="flex-1 px-6 py-3 rounded-2xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all shadow-lg shadow-destructive/20 disabled:opacity-70"
               >
                 Delete
               </button>

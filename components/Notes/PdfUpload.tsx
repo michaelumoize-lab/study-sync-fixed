@@ -328,8 +328,7 @@ export function PdfUpload({
       <div className="flex items-start gap-2 px-4 py-3 bg-secondary/30 rounded-2xl border border-border/50">
         <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Text is extracted from the PDF and saved as a note. The original PDF
-          is also stored and linked. Scanned PDFs (images) may not extract text.
+          Text is extracted from the PDF and saved as a note. Scanned PDFs (images) may not extract text.
         </p>
       </div>
     </div>
