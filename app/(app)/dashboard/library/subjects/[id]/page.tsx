@@ -1,12 +1,12 @@
 // app/dashboard/library/subjects/[id]/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { notes, subjects, tags, noteTags } from "@/lib/schema";
 import { eq, and, isNull, desc, inArray } from "drizzle-orm";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { FilteredNotesClient } from "@/components/Library/FilteredNotesClient";
 import { Note } from "@/types/note";
 import { mapNote } from "@/lib/map-note";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +14,7 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function SubjectNotesPage({ params }: Props) {
   const { id } = await params;
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
+  const session = await getServerSession();
 
   const userId = session.user.id;
 

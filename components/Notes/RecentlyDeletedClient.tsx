@@ -271,6 +271,7 @@ export function RecentlyDeletedClient({
       setSelectedIds((prev) => prev.filter((i) => i !== id));
       posthog.capture("note_permanently_deleted", { note_id: id });
       toast.success("Note permanently deleted", { id: t });
+      window.dispatchEvent(new Event("vault-updated")); // ← add this
     } catch {
       toast.error("Delete failed", { id: t });
     }
@@ -310,6 +311,7 @@ export function RecentlyDeletedClient({
         id: t,
       });
       setSelectedIds([]);
+      window.dispatchEvent(new Event("vault-updated")); // ← add this
     } catch {
       toast.error("Bulk delete failed", { id: t });
     }

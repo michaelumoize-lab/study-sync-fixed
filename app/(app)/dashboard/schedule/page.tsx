@@ -1,17 +1,14 @@
 // app/dashboard/schedule/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { scheduleEvents, subjects } from "@/lib/schema";
 import { eq, asc } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { ScheduleClient } from "@/components/Schedule/ScheduleClient";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
+  const session = await getServerSession();
   const userId = session.user.id;
 
   const [events, userSubjects] = await Promise.all([

@@ -655,13 +655,6 @@ function SwipeStudyMode({
 // Deck Card
 // ---------------------------------------------------------------------------
 
-const STATUS_COLORS: Record<CardStatus, string> = {
-  new: "bg-secondary text-muted-foreground",
-  learning: "bg-red-500/10 text-red-500",
-  review: "bg-yellow-500/10 text-yellow-500",
-  mastered: "bg-primary/10 text-primary",
-};
-
 function DeckCard({
   deck,
   onStudyFlip,

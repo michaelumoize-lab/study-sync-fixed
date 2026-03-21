@@ -297,10 +297,14 @@ function EventPill({
 }) {
   const color = event.subjectColor;
   return (
-    <button
-      onClick={onClick}
+    <div
+      onClick={(e) => {
+        e.stopPropagation(); // prevent triggering the parent day button
+        onClick();
+      }}
+      role="button"
       className={cn(
-        "w-full text-left px-2 py-1 rounded-lg text-[11px] font-bold truncate transition-all hover:opacity-80",
+        "w-full text-left px-2 py-1 rounded-lg text-[11px] font-bold truncate transition-all hover:opacity-80 cursor-pointer",
         event.isCompleted ? "opacity-50 line-through" : "",
       )}
       style={{
@@ -309,7 +313,7 @@ function EventPill({
       }}
     >
       {formatTime(event.startsAt)} {event.title}
-    </button>
+    </div>
   );
 }
 
@@ -594,12 +598,12 @@ export function ScheduleClient({
                     </span>
                     <div className="flex flex-col gap-0.5 w-full">
                       {dayEvents.slice(0, 2).map((e) => (
-                        <div
+                        <EventPill
                           key={e.id}
-                          className="w-full h-1.5 rounded-full"
-                          style={{
-                            backgroundColor:
-                              e.subjectColor ?? "var(--color-primary)",
+                          event={e}
+                          onClick={() => {
+                            setSelectedDay(day);
+                            setEditingEvent(e);
                           }}
                         />
                       ))}

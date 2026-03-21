@@ -1,19 +1,16 @@
 // app/dashboard/recently-deleted/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { notes, subjects, tags, noteTags } from "@/lib/schema";
 import { eq, and, isNotNull, inArray, desc } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { RecentlyDeletedClient } from "@/components/Notes/RecentlyDeletedClient";
 import { Note } from "@/types/note";
-import { mapNote } from "@/lib/map-note"; // ✅ add
+import { mapNote } from "@/lib/map-note";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecentlyDeletedPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
+  const session = await getServerSession();
   const userId = session.user.id;
 
   const rawNotes = await db

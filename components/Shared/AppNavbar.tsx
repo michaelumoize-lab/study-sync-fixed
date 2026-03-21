@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useSyncExternalStore } from "react";
-import { Clock, Shield, Menu } from "lucide-react";
+import { Clock, Menu } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { ModeToggle } from "@/components/Shared/ModeToggle";
 import { SignOutButton } from "@/components/Shared/SignOutButton";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import Image from "next/image";
 
 const subscribe = () => () => {};
@@ -110,7 +109,7 @@ function UserMenu({
       <button className="focus:outline-none">
         <Avatar name={name} email={email} image={image} />
       </button>
-      <div className="absolute top-full right-0 mt-2 min-w-[200px] bg-card border border-border rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+      <div className="absolute top-full right-0 mt-2 min-w-50 bg-card border border-border rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
         <div className="px-5 py-3 border-b border-border bg-secondary/30">
           <p className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">
             Account
@@ -167,7 +166,7 @@ export default function AppNavbar({
       }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={`fixed top-0 right-0 z-40 h-16 border-b border-border bg-sidebar/80 backdrop-blur-md flex items-center px-4 sm:px-6 gap-3 left-0 ${
-        isCollapsed ? "md:left-[80px]" : "md:left-[288px]"
+        isCollapsed ? "md:left-20" : "md:left-72"
       }`}
     >
       {/* Hamburger — mobile only */}

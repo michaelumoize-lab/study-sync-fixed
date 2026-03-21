@@ -126,6 +126,16 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
   const titleRef = useRef(title);
   const contentRef = useRef(content);
 
+  const posthogRef = useRef(posthog);
+  const selectedPresetRef = useRef(selectedPreset);
+
+  useEffect(() => {
+    posthogRef.current = posthog;
+  }, [posthog]);
+  useEffect(() => {
+    selectedPresetRef.current = selectedPreset;
+  }, [selectedPreset]);
+
   useEffect(() => {
     titleRef.current = title;
   }, [title]);
@@ -157,25 +167,26 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
 
   // Timer countdown
   useEffect(() => {
-    if (timerRunning && timerSeconds > 0) {
-      timerRef.current = setInterval(() => {
-        setTimerSeconds((s) => {
-          if (s <= 1) {
-            setTimerRunning(false);
-            posthog.capture("focus_session_completed", {
-              duration_seconds: selectedPreset ?? 25 * 60,
-            });
-            toast.success("⏰ Focus session complete!", { duration: 5000 });
-            return 0;
-          }
-          return s - 1;
-        });
-      }, 1000);
-    }
+    if (!timerRunning) return;
+
+    timerRef.current = setInterval(() => {
+      setTimerSeconds((s) => {
+        if (s <= 1) {
+          setTimerRunning(false);
+          posthogRef.current.capture("focus_session_completed", {
+            duration_seconds: selectedPresetRef.current ?? 25 * 60,
+          });
+          toast.success("⏰ Focus session complete!", { duration: 5000 });
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerRunning]);
+  }, [timerRunning]); 
 
   // Sync isFullscreen with actual browser fullscreen state (e.g. Escape key exit)
   useEffect(() => {
@@ -244,7 +255,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
       });
       if (res.ok) {
         isDirtyRef.current = false;
-        posthog.capture("note_saved", { method: "auto" });
+        posthogRef.current.capture("note_saved", { method: "auto" });
         setAutoSaved(true);
         setTimeout(() => setAutoSaved(false), 2000);
       }
@@ -534,11 +545,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
                 {!timerRunning ? (
                   <button
                     onClick={() => {
-                      const preset = selectedPreset ?? 25 * 60;
-                      startTimer(preset);
-                      posthog.capture("focus_session_started", {
-                        duration_seconds: preset,
-                      });
+                      startTimer(selectedPreset ?? 25 * 60);
                     }}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 transition-all"
                   >

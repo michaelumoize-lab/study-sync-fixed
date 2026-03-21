@@ -36,12 +36,11 @@ export function useVaultCounts() {
 
   // Refresh counts whenever vault changes
   useEffect(() => {
-    const handler = () => fetchCounts();
-    window.addEventListener("vault-updated", handler);
-    window.addEventListener("draft-updated", handler);
+    window.addEventListener("vault-updated", fetchCounts);
+    window.addEventListener("draft-updated", fetchCounts);
     return () => {
-      window.removeEventListener("vault-updated", handler);
-      window.removeEventListener("draft-updated", handler);
+      window.removeEventListener("vault-updated", fetchCounts);
+      window.removeEventListener("draft-updated", fetchCounts);
     };
   }, [fetchCounts]);
 

@@ -46,9 +46,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ url: blob.url });
 }
 
-// Deletes the blob from Vercel storage.
-// The client is responsible for calling authClient.updateUser({ image: "" })
-// to clear the URL from Neon Auth after this returns success.
 export async function DELETE(req: NextRequest) {
   const { data: session } = await auth.getSession();
   if (!session?.user)

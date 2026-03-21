@@ -81,7 +81,6 @@ interface CardConfig {
   icon: React.ElementType;
   title: string;
   description: string;
-  featured?: boolean;
   badge?: string;
 }
 
@@ -104,7 +103,6 @@ const CARDS: CardConfig[] = [
     title: "Study AI",
     description:
       "Chat with your notes. Get summaries, quizzes, and instant answers.",
-    featured: true,
     badge: "AI-Powered",
   },
   {
@@ -112,7 +110,6 @@ const CARDS: CardConfig[] = [
     icon: Focus,
     title: "Focus Mode",
     description: "Focus on your notes without distractions.",
-    featured: true,
   },
   {
     href: "/dashboard/recent",
@@ -131,7 +128,6 @@ interface ActionCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
-  featured?: boolean;
   badge?: string;
 }
 
@@ -140,7 +136,6 @@ function ActionCard({
   icon,
   title,
   description,
-  featured = false,
   badge,
 }: ActionCardProps) {
   return (
@@ -189,14 +184,12 @@ interface WelcomePageClientProps {
   firstName: string;
   userEmail: string;
   userName: string;
-  userCreatedAt: string;
 }
 
 export function WelcomePageClient({
   firstName,
   userEmail,
   userName,
-  userCreatedAt,
 }: WelcomePageClientProps) {
   const posthog = usePostHog();
 
@@ -293,14 +286,13 @@ export function WelcomePageClient({
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
       >
         {CARDS.map(
-          ({ href, icon: Icon, title, description, featured, badge }) => (
+          ({ href, icon: Icon, title, description, badge }) => (
             <ActionCard
               key={href}
               href={href}
               icon={<Icon className="h-4 w-4" />}
               title={title}
               description={description}
-              featured={featured}
               badge={badge}
             />
           ),

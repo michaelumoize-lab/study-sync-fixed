@@ -6,8 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
-export const dynamic = "force-dynamic";
-
 export default function WelcomePage() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
