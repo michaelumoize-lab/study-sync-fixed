@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
       autoSaveInterval: 30,
       studyStreakCount: 0,
       updatedAt: new Date(),
-    });
+    })
+    .onConflictDoNothing();
 
     return NextResponse.json({ success: true });
   } catch (err) {
