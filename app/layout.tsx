@@ -14,6 +14,8 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://studysync.website";
+
 export const metadata: Metadata = {
   title: "StudySync | Your Personal Study Vault",
   description:
@@ -32,12 +34,21 @@ export const metadata: Metadata = {
     url: "https://studysync.website",
     siteName: "StudySync",
     type: "website",
+    images: [
+      {
+        url: `${baseUrl}/og-image.png]`,
+        width: 1200,
+        height: 630,
+        alt: "StudySync — Your Personal Study Vault",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "StudySync | Your Personal Study Vault",
     description:
       "Capture notes, chat with AI, create flashcards and study smarter.",
+    images: [`${baseUrl}/og-image.png`],
   },
 };
 
