@@ -14,7 +14,7 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.studysync.website";
+const baseUrl = "https://www.studysync.website";
 
 export const metadata: Metadata = {
   title: "StudySync | Your Personal Study Vault",
@@ -51,6 +51,7 @@ export const metadata: Metadata = {
     images: [`${baseUrl}/og-image.png`],
   },
 };
+
 
 export default function RootLayout({
   children,
