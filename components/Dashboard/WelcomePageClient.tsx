@@ -142,7 +142,7 @@ function ActionCard({
     <motion.div variants={fadeUp}>
       <Link
         href={href}
-        className="group relative flex flex-col p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:bg-secondary/40 hover:-translate-y-[2px] transition-all duration-200 h-full"
+        className="group relative flex flex-col p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:bg-secondary/40 hover:-translate-y-0.5 transition-all duration-200 h-full"
       >
         {/* Icon */}
         <div className="mb-4">
@@ -214,19 +214,18 @@ export function WelcomePageClient({
   }, []);
 
   useEffect(() => {
-  // Only send once per component mount
-  if (emailSentRef.current) return;
-  emailSentRef.current = true;
+    // Only send once per component mount
+    if (emailSentRef.current) return;
+    emailSentRef.current = true;
 
-  fetch("/api/email/welcome", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: userName, email: userEmail }),
-  })
-    .catch(() => {
+    fetch("/api/email/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: userName, email: userEmail }),
+    }).catch(() => {
       // Silent fail - don't block user experience
     });
-}, [userEmail, userName]); 
+  }, [userEmail, userName]);
 
   return (
     <motion.div
@@ -285,18 +284,16 @@ export function WelcomePageClient({
         variants={container}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
       >
-        {CARDS.map(
-          ({ href, icon: Icon, title, description, badge }) => (
-            <ActionCard
-              key={href}
-              href={href}
-              icon={<Icon className="h-4 w-4" />}
-              title={title}
-              description={description}
-              badge={badge}
-            />
-          ),
-        )}
+        {CARDS.map(({ href, icon: Icon, title, description, badge }) => (
+          <ActionCard
+            key={href}
+            href={href}
+            icon={<Icon className="h-4 w-4" />}
+            title={title}
+            description={description}
+            badge={badge}
+          />
+        ))}
       </motion.div>
     </motion.div>
   );
