@@ -21,13 +21,18 @@ export default function DashboardLayout({
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     // Initialize based on current pathname
-    return pathname === "/dashboard" || 
-           pathname === "/dashboard/study" || 
-           pathname === "/dashboard/focus-mode";
+    return (
+      pathname === "/dashboard" ||
+      pathname === "/dashboard/study" ||
+      pathname === "/dashboard/focus-mode"
+    );
   });
-  
+
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth >= 768;
+  });
   const [previousPathname, setPreviousPathname] = useState(pathname);
 
   // Handle pathname changes - use useEffect with proper cleanup
@@ -39,7 +44,7 @@ export default function DashboardLayout({
       setIsCollapsed(
         pathname === "/dashboard" ||
           pathname === "/dashboard/study" ||
-          pathname === "/dashboard/focus-mode"
+          pathname === "/dashboard/focus-mode",
       );
     }
   }, [pathname, previousPathname]);
@@ -49,10 +54,10 @@ export default function DashboardLayout({
     const checkDesktop = () => {
       setIsDesktop(window.innerWidth >= 768);
     };
-    
+
     checkDesktop();
     window.addEventListener("resize", checkDesktop);
-    
+
     return () => window.removeEventListener("resize", checkDesktop);
   }, []); // Empty dependency array - only run once on mount
 
@@ -96,11 +101,7 @@ export default function DashboardLayout({
           <motion.main
             initial={false}
             animate={{
-              marginLeft: isDesktop
-                ? isCollapsed
-                  ? "80px"
-                  : "288px"
-                : "0px",
+              marginLeft: isDesktop ? (isCollapsed ? "80px" : "288px") : "0px",
             }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="flex-1 min-w-0 w-full"
@@ -124,7 +125,6 @@ export default function DashboardLayout({
     </SidebarContext.Provider>
   );
 }
-
 
 // "use client";
 
