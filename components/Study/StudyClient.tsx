@@ -98,7 +98,6 @@ const QUICK_PROMPTS = [
       "Based on this note's content, what are the most important things I should focus on for studying?",
     requiresNote: false,
   },
-  // ✅ New cards
   {
     icon: MessageSquare,
     label: "Key takeaways",
@@ -156,27 +155,20 @@ function MessageBubble({ message }: { message: Message }) {
           <div
             className={cn(
               "prose prose-sm max-w-none text-foreground",
-              // Headings
               "[&_h1]:text-foreground [&_h1]:font-black [&_h1]:text-lg [&_h1]:mt-4 [&_h1]:mb-2",
               "[&_h2]:text-foreground [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-4 [&_h2]:mb-2",
               "[&_h3]:text-foreground [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-3 [&_h3]:mb-1.5",
-              // Paragraphs — proper spacing between them
               "[&_p]:text-foreground [&_p]:leading-relaxed [&_p]:mb-3 [&_p]:last:mb-0",
-              // Bold and italic
               "[&_strong]:text-foreground [&_strong]:font-bold",
               "[&_em]:text-foreground [&_em]:italic",
-              // Lists with good spacing
               "[&_ul]:my-3 [&_ul]:pl-5 [&_ul]:space-y-1",
               "[&_ol]:my-3 [&_ol]:pl-5 [&_ol]:space-y-1",
               "[&_li]:text-foreground [&_li]:leading-relaxed",
               "[&_li>p]:mb-0",
-              // Code
               "[&_code]:text-primary [&_code]:bg-primary/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_code]:text-xs [&_code]:font-mono",
               "[&_pre]:bg-secondary [&_pre]:rounded-xl [&_pre]:p-3 [&_pre]:my-3 [&_pre]:overflow-x-auto",
               "[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-foreground",
-              // Blockquote
               "[&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground [&_blockquote]:italic [&_blockquote]:my-3",
-              // HR
               "[&_hr]:border-border [&_hr]:my-4",
             )}
           >
@@ -287,7 +279,11 @@ function SessionItem({
 // Main StudyClient
 // ---------------------------------------------------------------------------
 
-export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = false }: StudyClientProps) {
+export function StudyClient({
+  initialSessions,
+  userNotes,
+  sidebarCollapsed = false,
+}: StudyClientProps) {
   const posthog = usePostHog();
   const [sessions, setSessions] = useState<ChatSession[]>(initialSessions);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -309,7 +305,6 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  // Refocus input whenever streaming finishes
   useEffect(() => {
     if (!isStreaming) {
       inputRef.current?.focus();
@@ -374,7 +369,6 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
     const text = messageText ?? input.trim();
     if (!text || isStreaming) return;
 
-    // Capture current session ID before any async state changes
     const currentSessionId = activeSessionId;
 
     setInput("");
@@ -434,7 +428,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
                   title: text.slice(0, 60),
                   noteId: attachedNote?.id ?? null,
                   noteTitle: attachedNote?.title ?? null,
-                  messageCount: 2, // user + assistant
+                  messageCount: 2,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                 },
@@ -459,7 +453,6 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
         }
       }
 
-      // Only update count for existing sessions — new sessions already have messageCount: 2
       if (currentSessionId) {
         setSessions((prev) =>
           prev.map((s) =>
@@ -514,7 +507,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -300, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="absolute md:relative z-20 h-full w-full sm:w-[320px] md:w-66 shrink-0 flex flex-col bg-sidebar border-r border-border overflow-hidden shadow-xl md:shadow-none"
+              className="absolute md:relative z-20 h-full w-full sm:w-[320px] md:w-64 shrink-0 flex flex-col bg-sidebar border-r border-border overflow-hidden shadow-xl md:shadow-none"
             >
               {/* Sidebar header */}
               <div className="px-4 pt-4 pb-3 border-b border-border shrink-0">
@@ -540,7 +533,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
                 </button>
               </div>
 
-              {/* Session list — scrollable, no scrollbar */}
+              {/* Session list */}
               <div className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-0.5">
                 {sessions.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-8 px-4">
@@ -588,7 +581,9 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
             {attachedNote && (
               <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary shrink-0">
                 <Paperclip className="w-3 h-3" />
-                <span className="max-w-30 truncate">{attachedNote.title}</span>
+                <span className="max-w-[120px] truncate">
+                  {attachedNote.title}
+                </span>
                 <button onClick={() => setAttachedNote(null)}>
                   <X className="w-3 h-3 hover:text-destructive transition-colors" />
                 </button>
@@ -596,17 +591,15 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
             )}
           </div>
 
-          {/* Messages — fills remaining space, scrollable, no scrollbar */}
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-6 space-y-5 min-h-0">
             {isLoadingSession ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
-                <div className="bg-primary/10 p-5 rounded-2xl">
-                  <Sparkles className="w-10 h-10 text-primary" />
-                </div>
+              // ── Empty state — no logo, just heading + prompts ──
+              <div className="flex flex-col items-center gap-6 text-center pt-8">
                 <div>
                   <h2 className="text-2xl font-black text-foreground mb-2">
                     Study AI
@@ -616,6 +609,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
                     action.
                   </p>
                 </div>
+
                 {/* Quick prompts */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 w-full max-w-2xl">
                   {QUICK_PROMPTS.map((prompt) => (
@@ -664,7 +658,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
             )}
           </div>
 
-          {/* Note picker — floats above input */}
+          {/* Note picker */}
           <AnimatePresence>
             {showNotesPicker && (
               <motion.div
@@ -707,7 +701,6 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
                             setAttachedNote(note);
                             setShowNotesPicker(false);
                             setNoteSearch("");
-                            // ✅ Apply pending prompt if one was waiting
                             if (pendingPrompt) {
                               setInput(pendingPrompt);
                               setPendingPrompt(null);
@@ -729,7 +722,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
             )}
           </AnimatePresence>
 
-          {/* Input — always at bottom, never pushed off screen */}
+          {/* Input */}
           <div className="px-4 pb-4 pt-3 border-t border-border bg-sidebar/30 shrink-0">
             <div className="flex items-end gap-2 bg-card border border-border rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-primary transition-all">
               <button
@@ -755,7 +748,6 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
                     Math.min(e.target.scrollHeight, 120) + "px";
                 }}
                 onPaste={(e) => {
-                  // Preserve plain text with line breaks from clipboard
                   e.preventDefault();
                   const text = e.clipboardData.getData("text/plain");
                   const start = e.currentTarget.selectionStart;
@@ -764,7 +756,6 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
                   const newValue =
                     current.slice(0, start) + text + current.slice(end);
                   setInput(newValue);
-                  // Restore cursor position after paste
                   setTimeout(() => {
                     if (inputRef.current) {
                       const pos = start + text.length;
@@ -784,7 +775,7 @@ export function StudyClient({ initialSessions, userNotes, sidebarCollapsed = fal
                 }
                 disabled={isStreaming}
                 rows={1}
-                className="flex-1 bg-transparent outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 py-1.5 max-h-30 scrollbar-hide"
+                className="flex-1 bg-transparent outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 py-1.5 max-h-[120px] scrollbar-hide"
               />
 
               <button

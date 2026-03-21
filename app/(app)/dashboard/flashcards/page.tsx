@@ -1,17 +1,15 @@
 // app/dashboard/flashcards/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { flashcardDecks, flashcards, notes } from "@/lib/schema";
-import { eq, count, desc, asc } from "drizzle-orm";
-import { redirect } from "next/navigation";
+import { eq, count, desc, asc, and } from "drizzle-orm";
 import { FlashcardsClient } from "@/components/Flashcards/FlashcardsClient";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function FlashcardsPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
+  
+  const session = await getServerSession();
   const userId = session.user.id;
 
   const [decks, userNotes] = await Promise.all([
@@ -33,9 +31,18 @@ export default async function FlashcardsPage() {
       .orderBy(desc(flashcardDecks.updatedAt)),
 
     db
-      .select({ id: notes.id, title: notes.title, content: notes.content })
+      .select({ 
+        id: notes.id, 
+        title: notes.title, 
+        content: notes.content 
+      })
       .from(notes)
-      .where(eq(notes.userId, userId))
+      .where(
+        and(
+          eq(notes.userId, userId),
+          eq(notes.status, "active") // Add this filter
+        )
+      )
       .orderBy(asc(notes.updatedAt))
       .limit(100),
   ]);

@@ -1,3 +1,4 @@
+// app/(app)/layout.tsx
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
 

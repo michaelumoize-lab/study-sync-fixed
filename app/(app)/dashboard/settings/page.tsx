@@ -1,5 +1,4 @@
 // app/(app)/dashboard/settings/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import {
   userSettings,
@@ -10,15 +9,13 @@ import {
   tags,
 } from "@/lib/schema";
 import { eq, count } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { SettingsClient } from "@/components/Settings/SettingsClient";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
+  const session = await getServerSession();
   const userId = session.user.id;
 
   const [settings, stats] = await Promise.all([
@@ -78,7 +75,7 @@ export default async function SettingsPage() {
       initialSettings={settings}
       userEmail={session.user.email ?? ""}
       userName={session.user.name ?? ""}
-      userImage={session.user.image ?? null}   // ← new prop
+      userImage={session.user.image ?? null} // ← new prop
       stats={stats}
     />
   );

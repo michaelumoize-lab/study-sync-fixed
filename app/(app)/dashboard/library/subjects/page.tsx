@@ -1,16 +1,14 @@
 // app/dashboard/library/subjects/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { subjects, notes } from "@/lib/schema";
 import { eq, asc, count, and, isNull } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { SubjectsClient } from "@/components/Library/SubjectsClient";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubjectsPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
+  const session = await getServerSession();
 
   const userId = session.user.id;
 

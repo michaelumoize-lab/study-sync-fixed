@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X, BookOpen } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { ModeToggle } from "@/components/Shared/ModeToggle";
-import { cn } from "@/lib/utils";
 
 const GUEST_LINKS = [
   { label: "Features", href: "#features" },

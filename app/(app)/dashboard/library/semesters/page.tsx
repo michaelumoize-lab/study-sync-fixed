@@ -1,17 +1,15 @@
 // app/dashboard/library/semesters/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { semesters, notes } from "@/lib/schema";
 import { eq, desc, count, and, isNull } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { SemestersClient } from "@/components/Library/SemestersClient";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SemestersPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
+  
+  const session = await getServerSession();
   const userId = session.user.id;
 
   const rows = await db

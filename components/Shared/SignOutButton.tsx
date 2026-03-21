@@ -8,7 +8,6 @@ export function SignOutButton() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    sessionStorage.removeItem("studysync_seen_welcome");
 
     await authClient.signOut({
       fetchOptions: {

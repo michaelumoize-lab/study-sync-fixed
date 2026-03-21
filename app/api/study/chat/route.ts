@@ -35,7 +35,9 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id;
 
-  const { success, limit, remaining, reset } = await ratelimit.limit(`study_write:${userId}`);
+  const { success, limit, remaining, reset } = await ratelimit.limit(
+    `study_write:${userId}`,
+  );
   if (!success)
     return NextResponse.json(
       { error: "Too many requests, slow down" },
@@ -79,7 +81,13 @@ export async function POST(req: NextRequest) {
     const [note] = await db
       .select({ title: notes.title, content: notes.content })
       .from(notes)
-      .where(and(eq(notes.id, noteId), eq(notes.userId, userId)));
+      .where(
+        and(
+          eq(notes.id, noteId),
+          eq(notes.userId, userId),
+          eq(notes.status, "active"),
+        ),
+      );
 
     if (note) {
       const plainContent = (note.content ?? "")
@@ -112,14 +120,15 @@ export async function POST(req: NextRequest) {
   // ---------------------------------------------------------------------------
   // Build messages array for Groq
   // ---------------------------------------------------------------------------
-  const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
-    { role: "system", content: SYSTEM_PROMPT + noteContext },
-    ...history.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })),
-    { role: "user", content: message },
-  ];
+  const messages: { role: "system" | "user" | "assistant"; content: string }[] =
+    [
+      { role: "system", content: SYSTEM_PROMPT + noteContext },
+      ...history.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+      { role: "user", content: message },
+    ];
 
   // ---------------------------------------------------------------------------
   // Stream response from Groq
@@ -140,7 +149,9 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       // Send session ID first so client can store it
       controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify({ sessionId: activeSessionId })}\n\n`)
+        encoder.encode(
+          `data: ${JSON.stringify({ sessionId: activeSessionId })}\n\n`,
+        ),
       );
 
       for await (const chunk of stream) {
@@ -148,7 +159,7 @@ export async function POST(req: NextRequest) {
         if (delta) {
           fullResponse += delta;
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`)
+            encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`),
           );
         }
       }

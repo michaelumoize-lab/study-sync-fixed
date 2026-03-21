@@ -1,19 +1,16 @@
 // app/dashboard/recent/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { notes, subjects, tags, noteTags } from "@/lib/schema";
 import { eq, and, isNull, desc, inArray } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { RecentClient } from "@/components/Notes/RecentClient";
 import { Note } from "@/types/note";
 import { mapNote } from "@/lib/map-note"; // ✅ add
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecentPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
+  const session = await getServerSession();
   const userId = session.user.id;
 
   const rawNotes = await db

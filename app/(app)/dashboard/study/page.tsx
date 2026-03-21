@@ -1,17 +1,14 @@
 // app/dashboard/study/page.tsx
-import { auth } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { studySessions, studyMessages, notes } from "@/lib/schema";
-import { eq, desc, count, asc } from "drizzle-orm";
-import { redirect } from "next/navigation";
+import { eq, desc, count, asc, and } from "drizzle-orm";
 import { StudyClient } from "@/components/Study/StudyClient";
+import { getServerSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function StudyPage() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-
+  const session = await getServerSession();
   const userId = session.user.id;
 
   // Load recent sessions
@@ -37,7 +34,12 @@ export default async function StudyPage() {
   const userNotes = await db
     .select({ id: notes.id, title: notes.title })
     .from(notes)
-    .where(eq(notes.userId, userId))
+    .where(
+      and(
+        eq(notes.userId, userId),
+        eq(notes.status, "active"), // Add this filter
+      ),
+    )
     .orderBy(asc(notes.updatedAt))
     .limit(100);
 
