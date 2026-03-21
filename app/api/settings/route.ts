@@ -22,8 +22,6 @@ export async function GET() {
     settings ?? {
       userId: session.user.id,
       theme: "system",
-      defaultView: "vault",
-      editorFont: "outfit",
       autoSaveInterval: 30,
       studyStreakCount: 0,
       lastActiveAt: null,
@@ -38,15 +36,13 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { theme, defaultView, editorFont, autoSaveInterval } = body;
+  const { theme, autoSaveInterval } = body;
 
   const [updated] = await db
     .insert(userSettings)
     .values({
       userId: session.user.id,
       theme,
-      defaultView,
-      editorFont,
       autoSaveInterval,
       updatedAt: new Date(),
     })
@@ -54,8 +50,6 @@ export async function PUT(req: NextRequest) {
       target: userSettings.userId,
       set: {
         ...(theme !== undefined && { theme }),
-        ...(defaultView !== undefined && { defaultView }),
-        ...(editorFont !== undefined && { editorFont }),
         ...(autoSaveInterval !== undefined && { autoSaveInterval }),
         updatedAt: new Date(),
       },
