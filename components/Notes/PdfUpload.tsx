@@ -16,6 +16,17 @@ import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Note } from "@/types/note";
 
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const MAX_PDF_SIZE = 20 * 1024 * 1024;
+const MAX_PDF_SIZE_LABEL = "20MB";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 interface Subject {
   id: string;
   name: string;
@@ -52,8 +63,8 @@ export function PdfUpload({
       toast.error("Only PDF files are supported");
       return;
     }
-    if (f.size > 10 * 1024 * 1024) {
-      toast.error("File too large. Max 10MB.");
+    if (f.size > MAX_PDF_SIZE) {
+      toast.error(`File too large. Max ${MAX_PDF_SIZE_LABEL}.`);
       return;
     }
     setFile(f);
@@ -95,9 +106,8 @@ export function PdfUpload({
       const { fullText } = await parsePDFFile(file);
 
       setProgress("saving");
-      toast.loading("Saving to Study-Sync vault...", { id: toastId });
+      toast.loading("Saving to StudySync vault...", { id: toastId });
 
-      // Send everything to the server — let the server handle the blob upload
       const res = await fetch("/api/upload/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,6 +140,7 @@ export function PdfUpload({
       setUploading(false);
     }
   };
+
   const progressLabel = {
     idle: "",
     uploading: "Uploading to storage...",
@@ -182,7 +193,7 @@ export function PdfUpload({
                   <span className="text-primary font-bold">
                     click to browse
                   </span>{" "}
-                  — max 10MB
+                  — max {MAX_PDF_SIZE_LABEL}
                 </p>
               </div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
@@ -328,7 +339,8 @@ export function PdfUpload({
       <div className="flex items-start gap-2 px-4 py-3 bg-secondary/30 rounded-2xl border border-border/50">
         <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Text is extracted from the PDF and saved as a note. Scanned PDFs (images) may not extract text.
+          Text is extracted from the PDF and saved as a note. Scanned PDFs
+          (images) may not extract text.
         </p>
       </div>
     </div>
