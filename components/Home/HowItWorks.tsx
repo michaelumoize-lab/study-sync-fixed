@@ -1,6 +1,8 @@
 "use client";
 
 import { Edit3, RefreshCcw, ArrowRight, FolderPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
 
 const steps = [
   {
@@ -30,10 +32,12 @@ const steps = [
 ];
 
 export default function HowItWorks() {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+
   return (
     <section id="how-it-works" className="py-24 bg-muted/30 dark:bg-muted/10">
       <div className="max-w-6xl mx-auto px-6">
-
         {/* HEADER */}
         <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
           <p className="text-primary font-bold tracking-widest uppercase text-sm">
@@ -43,13 +47,13 @@ export default function HowItWorks() {
             How StudySync works
           </h2>
           <p className="text-muted-foreground text-lg">
-            We designed StudySync to get out of your way so you can focus on what matters most: your education.
+            We designed StudySync to get out of your way so you can focus on
+            what matters most: your education.
           </p>
         </div>
 
         {/* STEPS GRID */}
         <div className="grid md:grid-cols-3 gap-12 relative">
-
           {/* Connector Line — top-8 = half of h-16 icon height */}
           <div className="hidden md:block absolute top-8 left-[10%] w-[80%] h-[2px] bg-border z-0" />
 
@@ -96,7 +100,12 @@ export default function HowItWorks() {
           <h3 className="text-2xl md:text-3xl font-bold text-background dark:text-foreground relative z-10">
             Ready to build your study vault?
           </h3>
-          <button className="relative z-10 bg-primary text-primary-foreground px-10 py-4 rounded-2xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/10 hover:brightness-105">
+          <button
+            onClick={() =>
+              router.push(session?.user ? "/dashboard/vault" : "/auth/sign-in")
+            }
+            className="relative z-10 bg-primary text-primary-foreground px-10 py-4 rounded-2xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/10 hover:brightness-105"
+          >
             Start Syncing for Free
           </button>
         </div>
