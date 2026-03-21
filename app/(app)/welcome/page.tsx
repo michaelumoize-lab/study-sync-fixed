@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default function WelcomePage() {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -19,7 +19,7 @@ export default function WelcomePage() {
     return () => clearTimeout(timer);
   }, [router]);
 
-  const name = session?.user?.name?.split(" ")[0] ?? "Scholar";
+  const name = session?.user?.name?.split(" ")[0];
 
   return (
     <AnimatePresence>
@@ -81,7 +81,14 @@ export default function WelcomePage() {
             }}
             className="text-6xl md:text-8xl font-black tracking-tighter text-foreground"
           >
-            Hey, <span className="text-primary">{name}</span>
+            {!isPending && (
+              <>
+                Hey, <span className="text-primary">{name ?? "there"}</span>
+              </>
+            )}
+            {isPending && (
+              <span className="inline-block w-48 h-16 bg-foreground/10 rounded-2xl animate-pulse" />
+            )}
           </motion.h1>
 
           <motion.div
