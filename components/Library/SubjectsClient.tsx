@@ -19,7 +19,6 @@ import Link from "next/link";
 import { NotesHeader } from "@/components/Notes/NotesHeader";
 import { DeleteModal } from "@/components/Notes/DeleteModal";
 import toast from "react-hot-toast";
-import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Types

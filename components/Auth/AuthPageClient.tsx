@@ -182,7 +182,7 @@ export function AuthPageClient() {
   if (step === "verify") {
     return (
       <div className="w-full max-w-md">
-        <div className="bg-card border border-border rounded-[2rem] p-8 shadow-xl">
+        <div className="bg-card border border-border rounded-4xl p-8 shadow-xl">
           <div className="text-center mb-8">
             <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <BookOpen className="w-7 h-7 text-primary" />
@@ -257,7 +257,7 @@ export function AuthPageClient() {
   // ── Main auth screen ───────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-md">
-      <div className="bg-card border border-border rounded-[2rem] p-8 shadow-xl">
+      <div className="bg-card border border-border rounded-4xl p-8 shadow-xl">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 group mb-4">

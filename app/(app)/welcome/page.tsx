@@ -26,11 +26,11 @@ export default function WelcomePage() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, scale: 1.05 }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background overflow-hidden"
+        className="fixed inset-0 z-100 flex flex-col items-center justify-center bg-background overflow-hidden"
       >
         {/* Brand glow */}
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 rounded-full blur-[120px] pointer-events-none"
           style={{
             background:
               "color-mix(in srgb, var(--color-primary) 8%, transparent)",
@@ -47,13 +47,13 @@ export default function WelcomePage() {
             stiffness: 100,
             delay: 0.2,
           }}
-          className="relative bg-primary p-5 rounded-[2rem] mb-10 shadow-lg"
+          className="relative bg-primary p-5 rounded-4xl mb-10 shadow-lg"
         >
           <Sparkles className="w-12 h-12 text-primary-foreground" />
           <motion.div
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 rounded-[2rem] border-2 border-primary"
+            className="absolute inset-0 rounded-4xl border-2 border-primary"
           />
         </motion.div>
 

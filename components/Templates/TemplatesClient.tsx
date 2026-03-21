@@ -14,7 +14,6 @@ import {
   Copy,
   Clock,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { NotesHeader } from "@/components/Notes/NotesHeader";
 import { DeleteModal } from "@/components/Notes/DeleteModal";
 import { NoteEditor } from "@/components/Notes/NoteEditor";
@@ -119,7 +118,7 @@ function TemplateModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -131,7 +130,7 @@ function TemplateModal({
         initial={{ scale: 0.95, opacity: 0, y: 16 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 16 }}
-        className="relative bg-card border border-border w-full max-w-2xl rounded-[2rem] shadow-2xl z-10 flex flex-col max-h-[90vh]"
+        className="relative bg-card border border-border w-full max-w-2xl rounded-4xl shadow-2xl z-10 flex flex-col max-h-[90vh]"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-7 pt-6 pb-4 border-b border-border shrink-0">
@@ -322,7 +321,6 @@ export function TemplatesClient({ initialTemplates }: TemplatesClientProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Template | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   const displayTemplates = templatesList.filter(
     (t) =>

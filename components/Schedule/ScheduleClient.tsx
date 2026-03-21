@@ -139,7 +139,7 @@ function EventModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -151,7 +151,7 @@ function EventModal({
         initial={{ scale: 0.95, opacity: 0, y: 16 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 16 }}
-        className="relative bg-card border border-border w-full max-w-md rounded-[2rem] p-7 shadow-2xl z-10"
+        className="relative bg-card border border-border w-full max-w-md rounded-4xl p-7 shadow-2xl z-10"
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-black text-foreground">
@@ -579,7 +579,7 @@ export function ScheduleClient({
                     key={day.toISOString()}
                     onClick={() => setSelectedDay(day)}
                     className={cn(
-                      "relative flex flex-col min-h-[64px] p-1.5 rounded-2xl text-left transition-all",
+                      "relative flex flex-col min-h-16 p-1.5 rounded-2xl text-left transition-all",
                       isSelected
                         ? "bg-primary/10 ring-2 ring-primary/30"
                         : "hover:bg-secondary/50",
