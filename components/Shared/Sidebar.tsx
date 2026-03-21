@@ -26,7 +26,6 @@ export function Sidebar({
   isMobileOpen,
 }: SidebarProps) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     Notes: true,
     Library: true,
@@ -42,17 +41,10 @@ export function Sidebar({
     deletedCount,
   };
 
-  useEffect(() => {
-    //eslint-disable-next-line react-hooks/exhaustive-deps
-    setMounted(true);
-  }, []);
-
   const toggleGroup = (section: string) => {
     if (collapsed) return;
     setOpenGroups((prev) => ({ ...prev, [section]: !prev[section] }));
   };
-
-  if (!mounted) return null;
 
   const checkActive = (href: string, type?: SidebarLinkConfig["checkType"]) =>
     type === "startsWith" ? pathname.startsWith(href) : pathname === href;
