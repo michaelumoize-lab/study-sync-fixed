@@ -43,6 +43,7 @@ export function Sidebar({
   };
 
   useEffect(() => {
+    //eslint-disable-next-line react-hooks/exhaustive-deps
     setMounted(true);
   }, []);
 
@@ -97,18 +98,21 @@ export function Sidebar({
               collapsed && "justify-center",
             )}
           >
-            <div className="bg-primary p-1.5 rounded-lg shrink-0">
-              <BookOpen className="w-4 h-4 text-primary-foreground" />
-            </div>
-            {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="font-black text-lg tracking-tight text-foreground whitespace-nowrap"
-              >
-                StudySync
-              </motion.span>
-            )}
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="bg-primary p-1.5 rounded-lg shrink-0">
+                <BookOpen className="w-4 h-4 text-primary-foreground" />
+              </div>
+
+              {!collapsed && (
+                <motion.span
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="font-black text-lg tracking-tight text-foreground whitespace-nowrap"
+                >
+                  StudySync
+                </motion.span>
+              )}
+            </Link>
           </div>
           <div
             className={cn("h-px bg-border/60", collapsed ? "w-8" : "w-full")}
