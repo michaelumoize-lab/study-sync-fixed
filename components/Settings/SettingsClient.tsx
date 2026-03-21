@@ -35,7 +35,6 @@ import Image from "next/image";
 interface UserSettingsData {
   userId: string;
   theme: string | null;
-  editorFont: string | null;
   autoSaveInterval: number | null;
   studyStreakCount: number | null;
   lastActiveAt: Date | string | null;
@@ -325,9 +324,6 @@ export function SettingsClient({
   const router = useRouter();
 
   const [theme, setThemeLocal] = useState(initialSettings.theme ?? "system");
-  const [editorFont, setEditorFont] = useState(
-    initialSettings.editorFont ?? "outfit",
-  );
   const [autoSaveInterval, setAutoSaveInterval] = useState(
     initialSettings.autoSaveInterval ?? 30,
   );
@@ -347,7 +343,7 @@ export function SettingsClient({
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme, editorFont, autoSaveInterval }),
+        body: JSON.stringify({ theme, autoSaveInterval }),
       });
       if (!res.ok) throw new Error();
       setSaved(true);

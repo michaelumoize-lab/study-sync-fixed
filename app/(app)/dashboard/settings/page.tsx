@@ -31,8 +31,6 @@ export default async function SettingsPage() {
           r[0] ?? {
             userId,
             theme: "system",
-            defaultView: "vault",
-            editorFont: "outfit",
             autoSaveInterval: 30,
             studyStreakCount: 0,
             lastActiveAt: null,

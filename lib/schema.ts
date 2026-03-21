@@ -328,12 +328,9 @@ export const userSettings = pgTable("user_settings", {
     .primaryKey()
     .references(() => neonAuthUsers.id, { onDelete: "cascade" }),
   theme: text("theme").default("system"),
-  defaultView: text("default_view").default("vault"),
-  editorFont: text("editor_font").default("outfit"),
   autoSaveInterval: integer("auto_save_interval").default(30),
   studyStreakCount: integer("study_streak_count").default(0),
   lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
-  welcomeEmailSent: boolean("welcome_email_sent").default(false).notNull(), // ← add this
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

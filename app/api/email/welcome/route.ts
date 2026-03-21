@@ -15,38 +15,39 @@ export async function POST(req: NextRequest) {
 
   const { name, email } = await req.json();
 
-  // Check if welcome email was already sent
-  const [settings] = await db
-    .select({ welcomeEmailSent: userSettings.welcomeEmailSent })
+  // Check if user_settings exists - if it does, welcome email was already sent
+  const [existingSettings] = await db
+    .select()
     .from(userSettings)
     .where(eq(userSettings.userId, session.user.id));
 
-  if (settings?.welcomeEmailSent) {
-    return NextResponse.json({ skipped: true, reason: "already sent" });
+  if (existingSettings) {
+    return NextResponse.json({
+      success: false,
+      skipped: true,
+      reason: "User already has settings row, so welcome email already sent",
+    });
   }
 
   const displayName = name || email?.split("@")[0] || "there";
 
   try {
     await resend.emails.send({
-      from: "StudySync <noreply@mail.studysync.website>",
+      from: "StudySync <support@mail.studysync.website>",
       to: email,
       subject: "Your vault is ready 🎉 — Welcome to StudySync",
       html: getWelcomeEmailHtml(displayName),
     });
 
-    // Mark as sent in DB
-    await db
-      .insert(userSettings)
-      .values({
-        userId: session.user.id,
-        welcomeEmailSent: true,
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: userSettings.userId,
-        set: { welcomeEmailSent: true, updatedAt: new Date() },
-      });
+    // Create user_settings record (marks that welcome email was sent)
+    await db.insert(userSettings).values({
+      userId: session.user.id,
+      theme: "system",
+      autoSaveInterval: 30,
+      studyStreakCount: 0,
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -485,7 +486,7 @@ function getWelcomeEmailHtml(name: string): string {
         &nbsp;·&nbsp;
         <a href="https://studysync.website/legal/terms-of-service" class="footer-link">Terms of Service</a>
         &nbsp;·&nbsp;
-        <a href="mailto:privacy@studysync.app" class="footer-link">Contact</a>
+        <a href="mailto:support@studysync.app" class="footer-link">Contact</a>
       </p>
       <p class="footer-note">You're receiving this because you just created a StudySync account.</p>
     </div>

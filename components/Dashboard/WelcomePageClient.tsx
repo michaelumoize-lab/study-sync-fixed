@@ -221,25 +221,19 @@ export function WelcomePageClient({
   }, []);
 
   useEffect(() => {
-    if (emailSentRef.current) return;
-    emailSentRef.current = true;
+  // Only send once per component mount
+  if (emailSentRef.current) return;
+  emailSentRef.current = true;
 
-    const storageKey = `welcome_sent_${userEmail}`;
-    if (localStorage.getItem(storageKey)) return;
-
-    fetch("/api/email/welcome", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: userName, email: userEmail }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          localStorage.setItem(storageKey, "1");
-        }
-      })
-      .catch(() => {});
-  }, [userEmail, userName]);
+  fetch("/api/email/welcome", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: userName, email: userEmail }),
+  })
+    .catch(() => {
+      // Silent fail - don't block user experience
+    });
+}, [userEmail, userName]); 
 
   return (
     <motion.div
