@@ -1,4 +1,4 @@
-// app/(main)/layout.tsx
+// app/(marketing)/layout.tsx
 import MarketingNavbar from "@/components/Shared/MarketingNavbar";
 import ScrollToTop from "@/components/Shared/ScrollToTop";
 
