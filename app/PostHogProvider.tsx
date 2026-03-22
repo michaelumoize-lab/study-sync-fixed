@@ -11,9 +11,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       ui_host: "https://us.posthog.com",
       defaults: "2026-01-30",
       disable_session_recording: true,
-      enable_recording_console_log: false,
       autocapture: false,
       disable_surveys: true,
+      capture_dead_clicks: false,
     });
   }, []);
 

@@ -46,10 +46,8 @@ export default async function middleware(request: NextRequest) {
     "/", // Home/landing page
     "/auth/sign-in", // Sign in page
     "/auth/sign-up", // Sign up page (if you have one)
-    "/about", // Optional: about page
-    "/pricing", // Optional: pricing page
-    "/privacy", // Optional: privacy policy
-    "/terms", // Optional: terms of service
+    "/sitemap.xml",
+    "/robots.txt",
   ];
 
   // Check if current path is public
