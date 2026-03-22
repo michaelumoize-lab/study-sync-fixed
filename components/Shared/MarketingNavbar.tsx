@@ -40,7 +40,11 @@ export default function MarketingNavbar() {
         <div className="grid grid-cols-2 md:grid-cols-3 items-center h-14 gap-4">
           {/* Logo */}
           <div className="flex justify-start">
-            <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <Link
+              aria-label="StudySync"
+              href="/"
+              className="flex items-center gap-2 group shrink-0"
+            >
               <div className="bg-primary p-1.5 rounded-lg transition-transform group-hover:scale-110">
                 <BookOpen className="w-5 h-5 text-primary-foreground" />
               </div>
@@ -54,6 +58,7 @@ export default function MarketingNavbar() {
           <div className="hidden md:flex justify-center items-center gap-8">
             {GUEST_LINKS.map((link) => (
               <Link
+                aria-label={link.label}
                 key={link.href}
                 href={link.href}
                 className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors"
@@ -71,6 +76,7 @@ export default function MarketingNavbar() {
             {session?.user ? (
               // Already signed in — send them to dashboard
               <Link
+                aria-label="Open Vault"
                 href="/dashboard"
                 className="hidden sm:block bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
               >
@@ -78,6 +84,7 @@ export default function MarketingNavbar() {
               </Link>
             ) : (
               <Link
+                aria-label="Sign In"
                 href="/auth/sign-in"
                 className="hidden sm:block bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
               >

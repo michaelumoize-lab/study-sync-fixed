@@ -3,9 +3,6 @@ import Footer from "@/components/Home/Footer";
 import Features from "@/components/Home/Features";
 import HowItWorks from "@/components/Home/HowItWorks";
 import { Metadata } from "next";
-import posthog from "posthog-js";
-
-export const dynamic = "force-dynamic";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://www.studysync.website";
@@ -58,15 +55,6 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY as string, {
-    api_host: "/ph",
-    ui_host: "https://us.posthog.com",
-    defaults: "2026-01-30",
-    disable_session_recording: true, // removes recorder.js
-    enable_recording_console_log: false,
-    autocapture: false, // removes dead-clicks script
-    disable_surveys: true, // removes surveys.js
-  });
   return (
     <div>
       <Hero />
