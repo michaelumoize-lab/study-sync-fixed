@@ -18,7 +18,7 @@ export default function Hero() {
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* LEFT CONTENT */}
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500 ease-out">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-foreground dark:text-primary text-xs font-bold tracking-wider uppercase">
               <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
@@ -38,14 +38,14 @@ export default function Hero() {
             </h1>
 
             {/* Subtext */}
-            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed delay-150 animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-both">
+            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed delay-150 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
               StudySync is your private vault for academic notes. Organize your
               thoughts, track your progress, and keep everything in one secure
               place.
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 delay-300 animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-both">
+            <div className="flex flex-col sm:flex-row items-center gap-4 delay-300 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
               <Link
                 href={session ? "/dashboard/vault" : "/auth/sign-in"}
                 className="group w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground font-bold rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 hover:shadow-primary/40 hover:brightness-105 active:scale-95"
@@ -65,7 +65,7 @@ export default function Hero() {
           </div>
 
           {/* RIGHT CONTENT - App Preview */}
-          <div className="relative lg:block animate-in fade-in zoom-in-95 duration-1000 delay-500 fill-mode-both">
+          <div className="relative lg:block animate-in fade-in zoom-in-95 duration-500 delay-500 fill-mode-both">
             <div className="relative z-10 bg-card border border-border rounded-3xl shadow-2xl overflow-hidden animate-float">
               {/* Window Chrome */}
               <div className="bg-muted/50 border-b border-border px-4 py-2.5 flex items-center gap-3">

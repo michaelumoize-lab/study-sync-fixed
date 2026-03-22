@@ -34,16 +34,13 @@ export default function MarketingNavbar() {
   return (
     <nav
       ref={menuRef}
-      className="fixed top-4 inset-x-0 z-[100] max-w-6xl mx-auto px-4"
+      className="fixed top-4 inset-x-0 z-100 max-w-6xl mx-auto px-4"
     >
       <div className="bg-background/80 backdrop-blur-md border border-border shadow-lg rounded-2xl px-4 py-2 md:px-6">
         <div className="grid grid-cols-2 md:grid-cols-3 items-center h-14 gap-4">
           {/* Logo */}
           <div className="flex justify-start">
-            <Link
-              href="/"
-              className="flex items-center gap-2 group flex-shrink-0"
-            >
+            <Link href="/" className="flex items-center gap-2 group shrink-0">
               <div className="bg-primary p-1.5 rounded-lg transition-transform group-hover:scale-110">
                 <BookOpen className="w-5 h-5 text-primary-foreground" />
               </div>
@@ -90,6 +87,7 @@ export default function MarketingNavbar() {
 
             {/* Mobile hamburger */}
             <button
+              aria-label="Toggle menu"
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-secondary transition-colors"
             >

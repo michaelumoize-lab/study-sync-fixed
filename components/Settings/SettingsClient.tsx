@@ -196,7 +196,9 @@ function AvatarUploader({
       }
       const { url } = await res.json();
 
-      const { error: updateError } = await authClient.updateUser({ image: url });
+      const { error: updateError } = await authClient.updateUser({
+        image: url,
+      });
       if (updateError) throw new Error(updateError.message);
 
       // Update the live URL ref so subsequent uploads/removals use the new URL
@@ -255,6 +257,7 @@ function AvatarUploader({
           {displayImage ? (
             <Image
               src={displayImage}
+              priority
               alt="Avatar"
               width={64}
               height={64}

@@ -11,7 +11,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-6 py-12 md:py-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* BRAND COLUMN */}
-           <div className="sm:col-span-2 lg:col-span-2 space-y-6">
+          <div className="sm:col-span-2 lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-2 group w-fit">
               <div className="bg-primary p-1.5 rounded-lg transition-transform group-hover:scale-110 shadow-sm">
                 <BookOpen className="w-5 h-5 text-primary-foreground" />
@@ -26,18 +26,21 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <Link
+                aria-label="Twitter"
                 href="#"
                 className="p-2 bg-secondary/50 rounded-xl text-muted-foreground hover:text-primary transition-colors"
               >
                 <Twitter className="w-5 h-5" />
               </Link>
               <Link
+                aria-label="Github"
                 href="#"
                 className="p-2 bg-secondary/50 rounded-xl text-muted-foreground hover:text-primary transition-colors"
               >
                 <Github className="w-5 h-5" />
               </Link>
               <Link
+                aria-label="Linkedin"
                 href="#"
                 className="p-2 bg-secondary/50 rounded-xl text-muted-foreground hover:text-primary transition-colors"
               >
@@ -140,7 +143,10 @@ export default function Footer() {
             <span>Developed with</span>
             <Heart className="w-4 h-4 text-red-500 fill-red-500 animate-pulse" />
             <span>by</span>
-            <Link href="https://michaelfolio-dev.vercel.app" className="text-foreground font-bold hover:text-primary transition-colors cursor-default">
+            <Link
+              href="https://michaelfolio-dev.vercel.app"
+              className="text-foreground font-bold hover:text-primary transition-colors cursor-default"
+            >
               Michael Umoize
             </Link>
           </div>

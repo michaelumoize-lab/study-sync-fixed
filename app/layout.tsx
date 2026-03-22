@@ -12,9 +12,11 @@ import "./globals.css";
 const outfit = Outfit({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const baseUrl = "https://www.studysync.website";
+const baseUrl =
+  process.env.NEXT_PUBLIC_BASE_URL || "https://www.studysync.website";
 
 export const metadata: Metadata = {
   title: "StudySync | Your Personal Study Vault",
@@ -22,17 +24,20 @@ export const metadata: Metadata = {
     "Capture notes, chat with AI, create flashcards, and build your personal knowledge vault. The smarter way to study.",
   keywords: [
     "study app",
-    "note taking",
-    "flashcards",
-    "AI study",
-    "student notes",
+    "note taking app",
+    "flashcards app",
+    "AI study assistant",
+    "student productivity",
+    "online learning tools",
+    "study planner",
   ],
   openGraph: {
     title: "StudySync | Your Personal Study Vault",
     description:
       "Capture notes, chat with AI, create flashcards and study smarter.",
-    url: baseUrl,
     siteName: "StudySync",
+    url: baseUrl,
+    locale: "en_US",
     type: "website",
   },
   twitter: {
@@ -40,9 +45,22 @@ export const metadata: Metadata = {
     title: "StudySync | Your Personal Study Vault",
     description:
       "Capture notes, chat with AI, create flashcards and study smarter.",
+    creator: "@miketech_90",
+    images: ["https://www.studysync.website/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
   },
 };
-
 
 export default function RootLayout({
   children,
