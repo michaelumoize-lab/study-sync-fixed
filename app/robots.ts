@@ -1,8 +1,14 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || "https://www.studysync.website";
   return {
-    rules: { userAgent: "*", allow: "/" },
-    sitemap: "https://www.studysync.website/sitemap.xml",
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/dashboard/", "/auth/", "/welcome/", "/api/"],
+    },
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

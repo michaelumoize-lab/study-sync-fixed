@@ -49,6 +49,7 @@ function Avatar({
       <div className={classes} style={style}>
         <Image
           src={image}
+          priority
           alt={name ?? "User avatar"}
           width={size}
           height={size}

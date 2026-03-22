@@ -186,7 +186,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerRunning]); 
+  }, [timerRunning]);
 
   // Sync isFullscreen with actual browser fullscreen state (e.g. Escape key exit)
   useEffect(() => {
@@ -555,7 +555,7 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
                   <>
                     <div className="flex-1 bg-secondary rounded-2xl overflow-hidden h-10">
                       <div
-                        className="h-full bg-orange-500/30 transition-all duration-1000"
+                        className="h-full bg-orange-500/30 transition-all duration-500"
                         style={{
                           width: `${(timerSeconds / (selectedPreset ?? 25 * 60)) * 100}%`,
                         }}
