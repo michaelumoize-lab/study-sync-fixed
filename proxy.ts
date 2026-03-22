@@ -17,7 +17,8 @@ export default async function middleware(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname === "/favicon.ico" ||
     pathname === "/sitemap.xml" ||
-    pathname === "/robots.txt"
+    pathname === "/robots.txt" ||
+    pathname === "/og-image.png"
   ) {
     return NextResponse.next();
   }

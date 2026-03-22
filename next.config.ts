@@ -8,12 +8,30 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/pdf.worker.min.mjs",
-        headers: [{ key: "Content-Type", value: "application/javascript" }],
+        source: "/sitemap.xml",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/xml; charset=utf-8",
+          },
+        ],
+      },
+      {
+        source: "/robots.txt",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "text/plain; charset=utf-8",
+          },
+        ],
       },
       {
         source: "/og-image.png",
         headers: [{ key: "Content-Type", value: "image/png" }],
+      },
+      {
+        source: "/pdf.worker.min.mjs",
+        headers: [{ key: "Content-Type", value: "application/javascript" }],
       },
       {
         source: "/(.*)",
