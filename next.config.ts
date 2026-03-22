@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion"],
+  },
 
   async headers() {
     return [
@@ -10,12 +13,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/og-image.png",
-        headers: [
-          {
-            key: "Content-Type",
-            value: "image/png",
-          },
-        ],
+        headers: [{ key: "Content-Type", value: "image/png" }],
       },
       {
         source: "/(.*)",
@@ -31,10 +29,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us.i.posthog.com",
-              "connect-src 'self' https://us.i.posthog.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com",
+              "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com",
               "img-src 'self' blob: data: https://lh3.googleusercontent.com https://*.public.blob.vercel-storage.com",
               "style-src 'self' 'unsafe-inline'",
+              "font-src 'self'",
               "frame-src https://www.youtube.com",
             ].join("; "),
           },
@@ -55,6 +54,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
   skipTrailingSlashRedirect: true,
 
   images: {
