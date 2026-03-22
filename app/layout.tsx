@@ -34,21 +34,12 @@ export const metadata: Metadata = {
     url: baseUrl,
     siteName: "StudySync",
     type: "website",
-    images: [
-      {
-        url: `${baseUrl}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "StudySync — Your Personal Study Vault",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "StudySync | Your Personal Study Vault",
     description:
       "Capture notes, chat with AI, create flashcards and study smarter.",
-    images: [`${baseUrl}/og-image.png`],
   },
 };
 
