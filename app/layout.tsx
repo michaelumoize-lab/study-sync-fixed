@@ -39,6 +39,7 @@ export const metadata: Metadata = {
     url: baseUrl,
     locale: "en_US",
     type: "website",
+    images: ["https://www.studysync.website/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
