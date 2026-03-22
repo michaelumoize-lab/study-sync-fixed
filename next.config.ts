@@ -26,12 +26,12 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/pdf.worker.min.mjs",
-        headers: [{ key: "Content-Type", value: "application/javascript" }],
-      },
-      {
         source: "/og-image.png",
         headers: [{ key: "Content-Type", value: "image/png" }],
+      },
+      {
+        source: "/pdf.worker.min.mjs",
+        headers: [{ key: "Content-Type", value: "application/javascript" }],
       },
       {
         source: "/(.*)",
