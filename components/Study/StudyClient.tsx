@@ -861,8 +861,7 @@ export function StudyClient({
                 placeholder={inputPlaceholder}
                 disabled={isStreaming}
                 rows={1}
-                className="flex-1 min-h-6 bg-transparent outline-none resize-none overflow-hidden text-base md:text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 py-1.5"
-              />
+                className="flex-1 min-h-6 max-h-40 bg-transparent outline-none resize-none overflow-y-auto text-base md:text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 py-1.5"              />
 
               <button
                 onClick={() => sendMessage()}
