@@ -40,4 +40,5 @@ export type UpdateNoteInput = {
   subjectId?: string | null;
   semesterId?: string | null;
   tagIds?: string[];
+  clearDraft?: boolean;
 };

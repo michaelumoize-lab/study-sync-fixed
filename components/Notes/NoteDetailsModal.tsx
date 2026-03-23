@@ -217,7 +217,7 @@ export function NoteDetailsModal({
             <div className="shrink-0 border-t border-border px-4 py-3 sm:px-8 sm:py-5">
               {/* Two rows on very small screens; one row on sm+ */}
               <div className="flex flex-wrap gap-2">
-                {onPublish && note.status === "draft" && (
+                {onPublish && (note.status === "draft" || note.hasDraft) && (
                   <button
                     onClick={() => {
                       onPublish(note);
@@ -226,7 +226,7 @@ export function NoteDetailsModal({
                     className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-bold text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-lg shadow-primary/20 whitespace-nowrap"
                   >
                     <Rocket className="w-4 h-4 shrink-0" />
-                    <span>Publish</span>
+                    <span>Publish to Vault</span>
                   </button>
                 )}
 

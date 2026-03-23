@@ -101,8 +101,16 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
   // FIX: semesterId was missing from destructuring and .set() — it was being
   // silently dropped on every update, so selecting a semester had no effect.
-  const { title, content, status, isPinned, subjectId, semesterId, tagIds } =
-    body;
+  const {
+    title,
+    content,
+    status,
+    isPinned,
+    subjectId,
+    semesterId,
+    tagIds,
+    clearDraft,
+  } = body;
 
   const [updated] = await db
     .update(notes)
@@ -112,7 +120,12 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       ...(status !== undefined && { status }),
       ...(isPinned !== undefined && { isPinned }),
       ...(subjectId !== undefined && { subjectId }),
-      ...(semesterId !== undefined && { semesterId }), // FIX: was missing
+      ...(semesterId !== undefined && { semesterId }),
+      ...(clearDraft === true && {
+        draftTitle: null,
+        draftContent: null,
+        hasDraft: false,
+      }),
       updatedAt: new Date(),
     })
     .where(and(eq(notes.id, id), eq(notes.userId, session.user.id)))

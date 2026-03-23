@@ -330,7 +330,7 @@ export function AuthPageClient() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full bg-secondary/50 border border-border rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="w-full bg-secondary/50 border border-border rounded-2xl px-4 py-3 text-base md:text-sm font-medium outline-none focus:ring-2 focus:ring-primary transition-all"
               />
             </div>
           )}
@@ -345,7 +345,7 @@ export function AuthPageClient() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full bg-secondary/50 border border-border rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary transition-all"
+              className="w-full bg-secondary/50 border border-border rounded-2xl px-4 py-3 text-base md:text-sm font-medium outline-none focus:ring-2 focus:ring-primary transition-all"
             />
           </div>
 
@@ -370,7 +370,7 @@ export function AuthPageClient() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full bg-secondary/50 border border-border rounded-2xl px-4 py-3 pr-11 text-sm font-medium outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="w-full bg-secondary/50 border border-border rounded-2xl px-4 py-3 pr-11 text-base md:text-sm font-medium outline-none focus:ring-2 focus:ring-primary transition-all"
               />
               <button
                 type="button"

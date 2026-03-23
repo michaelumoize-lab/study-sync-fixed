@@ -8,16 +8,13 @@ import AppNavbar from "@/components/Shared/AppNavbar";
 import ScrollToTop from "@/components/Shared/ScrollToTop";
 import { SidebarContext } from "@/context/SidebarContext";
 
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-
-  const isDashboardHome = pathname === "/dashboard";
-  const isStudyPage = pathname === "/dashboard/study";
-  const isFocusModePage = pathname === "/dashboard/focus-mode";
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     // Initialize based on current pathname
@@ -29,10 +26,8 @@ export default function DashboardLayout({
   });
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.innerWidth >= 768;
-  });
+  // false on server + first client paint — matches marginLeft 0px; effect sets real value after mount.
+  const [isDesktop, setIsDesktop] = useState(false);
   const [previousPathname, setPreviousPathname] = useState(pathname);
 
   // Handle pathname changes - use useEffect with proper cleanup
@@ -49,19 +44,13 @@ export default function DashboardLayout({
     }
   }, [pathname, previousPathname]);
 
-  // Handle responsive behavior
   useEffect(() => {
-    const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
     checkDesktop();
     window.addEventListener("resize", checkDesktop);
-
     return () => window.removeEventListener("resize", checkDesktop);
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
-  // Remove the mounted state entirely - it's not needed if we handle initial margins differently
   return (
     <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
       <>
@@ -101,7 +90,11 @@ export default function DashboardLayout({
           <motion.main
             initial={false}
             animate={{
-              marginLeft: isDesktop ? (isCollapsed ? "80px" : "288px") : "0px",
+              marginLeft: isDesktop
+                ? isCollapsed
+                  ? "80px"
+                  : "288px"
+                : "0px",
             }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="flex-1 min-w-0 w-full"
@@ -125,120 +118,3 @@ export default function DashboardLayout({
     </SidebarContext.Provider>
   );
 }
-
-// "use client";
-
-// import { Sidebar } from "@/components/Shared/Sidebar";
-// import { useState, useEffect } from "react";
-// import { usePathname } from "next/navigation";
-// import { AnimatePresence, motion } from "framer-motion";
-// import AppNavbar from "@/components/Shared/AppNavbar";
-// import ScrollToTop from "@/components/Shared/ScrollToTop";
-// import { SidebarContext } from "@/context/SidebarContext";
-
-// export default function DashboardLayout({
-//   children,
-// }: {
-//   children: React.ReactNode;
-// }) {
-//   const pathname = usePathname();
-
-//   const isDashboardHome = pathname === "/dashboard";
-//   const isStudyPage = pathname === "/dashboard/study";
-//   const isFocusModePage = pathname === "/dashboard/focus-mode";
-
-//   const [isCollapsed, setIsCollapsed] = useState(false);
-//   const [isMobileOpen, setIsMobileOpen] = useState(false);
-//   const [mounted, setMounted] = useState(false);
-//   const [isDesktop, setIsDesktop] = useState(true);
-
-//   const [lastPathname, setLastPathname] = useState(pathname);
-//   if (pathname !== lastPathname) {
-//     setLastPathname(pathname);
-//     setIsMobileOpen(false);
-//     setIsCollapsed(
-//       pathname === "/dashboard" ||
-//         pathname === "/dashboard/study" ||
-//         pathname === "/dashboard/focus-mode",
-//     );
-//   }
-
-//   useEffect(() => {
-//     setMounted(true);
-//     setIsCollapsed(isDashboardHome || isStudyPage);
-//     const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
-//     checkDesktop();
-//     window.addEventListener("resize", checkDesktop);
-//     return () => window.removeEventListener("resize", checkDesktop);
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, []);
-
-//   return (
-//     <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
-//       <>
-//         <ScrollToTop />
-//         <div
-//           className="flex min-h-screen bg-sidebar font-outfit overflow-x-hidden"
-//           style={
-//             {
-//               "--sidebar-width": isCollapsed ? "80px" : "288px",
-//             } as React.CSSProperties
-//           }
-//         >
-//           {/* Mobile backdrop */}
-//           <AnimatePresence>
-//             {isMobileOpen && (
-//               <motion.div
-//                 initial={{ opacity: 0 }}
-//                 animate={{ opacity: 1 }}
-//                 exit={{ opacity: 0 }}
-//                 onClick={() => setIsMobileOpen(false)}
-//                 className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
-//               />
-//             )}
-//           </AnimatePresence>
-
-//           <Sidebar
-//             isCollapsed={isCollapsed}
-//             setIsCollapsed={setIsCollapsed}
-//             isMobileOpen={isMobileOpen}
-//           />
-
-//           {/* Hamburger now lives inside AppNavbar via onMobileSidebarToggle */}
-//           <AppNavbar
-//             isCollapsed={isCollapsed}
-//             onMobileSidebarToggle={() => setIsMobileOpen(true)}
-//           />
-
-//           <motion.main
-//             initial={false}
-//             animate={{
-//               marginLeft:
-//                 mounted && isDesktop
-//                   ? isCollapsed
-//                     ? "80px"
-//                     : "288px"
-//                   : "0px",
-//             }}
-//             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-//             className="flex-1 min-w-0 w-full"
-//           >
-//             <div className="max-w-5xl mx-auto px-6 md:px-10 pt-24 pb-20">
-//               <AnimatePresence mode="wait">
-//                 <motion.div
-//                   key={pathname}
-//                   initial={{ opacity: 0, y: 12 }}
-//                   animate={{ opacity: 1, y: 0 }}
-//                   exit={{ opacity: 0, y: -12 }}
-//                   transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-//                 >
-//                   {children}
-//                 </motion.div>
-//               </AnimatePresence>
-//             </div>
-//           </motion.main>
-//         </div>
-//       </>
-//     </SidebarContext.Provider>
-//   );
-// }

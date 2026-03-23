@@ -240,13 +240,13 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
     return `${m}:${sec}`;
   };
 
-  // Auto-save every 30 s
+  // Auto-save every 30 s — saves as draft, not real content
   const autoSave = useCallback(async () => {
     if (!isDirtyRef.current || !selectedNoteId || !titleRef.current.trim())
       return;
     try {
-      const res = await apiFetch(`/api/vault/${selectedNoteId}`, {
-        method: "PUT",
+      const res = await apiFetch(`/api/notes/${selectedNoteId}/draft`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: titleRef.current,
@@ -258,6 +258,12 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
         posthogRef.current.capture("note_saved", { method: "auto" });
         setAutoSaved(true);
         setTimeout(() => setAutoSaved(false), 2000);
+        window.dispatchEvent(new Event("draft-updated"));
+        toast.success("Draft auto-saved", {
+          id: "autosave",
+          icon: "📝",
+          duration: 2000,
+        });
       }
     } catch {}
   }, [selectedNoteId]);
@@ -270,21 +276,24 @@ export function FocusModeClient({ initialNotes }: FocusModeClientProps) {
   const handleSave = async () => {
     if (!selectedNoteId || !title.trim()) return;
     setIsSaving(true);
+    const t = toast.loading("Saving...");
     try {
       const res = await apiFetch(`/api/vault/${selectedNoteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content }),
+        body: JSON.stringify({ title, content, clearDraft: true }),
       });
       if (res.ok) {
         isDirtyRef.current = false;
         posthog.capture("note_saved", { method: "manual" });
-        toast.success("Note saved");
+        window.dispatchEvent(new Event("vault-updated"));
+        window.dispatchEvent(new Event("draft-updated"));
+        toast.success("Changes saved", { id: t });
       } else {
-        toast.error("Save failed");
+        toast.error("Save failed", { id: t });
       }
     } catch {
-      toast.error("Save failed");
+      toast.error("Save failed", { id: t });
     } finally {
       setIsSaving(false);
     }

@@ -1,7 +1,14 @@
 "use client";
 // components/Study/StudyClient.tsx
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+} from "react";
 import { usePostHog } from "posthog-js/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -119,6 +126,50 @@ const QUICK_PROMPTS = [
     requiresNote: true,
   },
 ];
+
+function syncTextareaHeight(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
+/** Native scrollHeight ignores wrapped placeholder height when value is empty — measure explicitly. */
+function measurePlaceholderHeight(
+  textarea: HTMLTextAreaElement,
+  placeholder: string,
+): number {
+  if (!placeholder.trim()) {
+    textarea.style.height = "auto";
+    return textarea.scrollHeight;
+  }
+  const w = textarea.clientWidth;
+  if (w <= 0) {
+    textarea.style.height = "auto";
+    return textarea.scrollHeight;
+  }
+  const div = document.createElement("div");
+  const cs = window.getComputedStyle(textarea);
+  div.setAttribute("aria-hidden", "true");
+  div.style.cssText = [
+    "position:absolute",
+    "left:-9999px",
+    "top:0",
+    `width:${w}px`,
+    `font:${cs.font}`,
+    `line-height:${cs.lineHeight}`,
+    `letter-spacing:${cs.letterSpacing}`,
+    `padding:${cs.padding}`,
+    `box-sizing:${cs.boxSizing}`,
+    "white-space:pre-wrap",
+    "word-break:break-word",
+    "overflow-wrap:break-word",
+  ].join(";");
+  div.textContent = placeholder;
+  document.body.appendChild(div);
+  const measured = div.offsetHeight;
+  document.body.removeChild(div);
+  const line = parseFloat(cs.lineHeight) || 24;
+  return Math.max(measured, line);
+}
 
 // ---------------------------------------------------------------------------
 // Message bubble
@@ -301,18 +352,66 @@ export function StudyClient({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  const inputPlaceholder = useMemo(
+    () =>
+      attachedNote
+        ? `Ask about "${attachedNote.title}"...`
+        : "Ask anything...",
+    [attachedNote],
+  );
+
+  const syncInputHeight = useCallback(
+    (el: HTMLTextAreaElement, value: string) => {
+      el.style.height = "auto";
+      if (value.length === 0) {
+        el.style.height = `${measurePlaceholderHeight(el, inputPlaceholder)}px`;
+      } else {
+        el.style.height = `${el.scrollHeight}px`;
+      }
+    },
+    [inputPlaceholder],
+  );
+
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    if (input.length === 0) {
+      el.style.height = `${measurePlaceholderHeight(el, inputPlaceholder)}px`;
+    } else {
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, [input, inputPlaceholder]);
+
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const apply = () => {
+      const ta = inputRef.current;
+      if (!ta) return;
+      ta.style.height = "auto";
+      if (ta.value.length === 0) {
+        ta.style.height = `${measurePlaceholderHeight(ta, inputPlaceholder)}px`;
+      } else {
+        ta.style.height = `${ta.scrollHeight}px`;
+      }
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [inputPlaceholder]);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  // Only scroll to bottom when messages exist — prevents the page from
+  // jumping to the bottom on first load with an empty message list
   useEffect(() => {
-    if (!isStreaming) {
-      inputRef.current?.focus();
+    if (messages.length > 0) {
+      scrollToBottom();
     }
-  }, [isStreaming]);
-
-  useEffect(() => {
-    scrollToBottom();
   }, [messages, scrollToBottom]);
 
   // ---------------------------------------------------------------------------
@@ -491,13 +590,15 @@ export function StudyClient({
   // Render
   // ---------------------------------------------------------------------------
   return (
+    // Use 100dvh (dynamic viewport height) instead of 100vh — dvh correctly
+    // shrinks when the mobile keyboard opens so the input stays visible
     <div
-      className="flex overflow-hidden bg-background -mx-6 md:-mx-10 -mt-6 md:-mt-0"
-      style={{ height: "calc(100vh - 6rem)" }}
+      className="flex overflow-hidden bg-background -mx-6 md:-mx-10 -mt-6 md:mt-0"
+      style={{ height: "calc(100dvh - 6rem)" }}
     >
       <div
-        className="flex w-full h-full overflow-hidden mx-4 my-3 rounded-2xl border border-border shadow-sm"
-        style={{ maxHeight: "calc(100vh - 7rem)" }}
+        className="relative flex w-full h-full overflow-hidden mx-4 my-3 rounded-2xl border border-border shadow-sm"
+        style={{ maxHeight: "calc(100dvh - 7rem)" }}
       >
         {/* ── Sidebar ── */}
         <AnimatePresence initial={false}>
@@ -598,7 +699,6 @@ export function StudyClient({
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : messages.length === 0 ? (
-              // ── Empty state — no logo, just heading + prompts ──
               <div className="flex flex-col items-center gap-6 text-center pt-8">
                 <div>
                   <h2 className="text-2xl font-black text-foreground mb-2">
@@ -623,7 +723,6 @@ export function StudyClient({
                           return;
                         }
                         setInput(prompt.prompt);
-                        setTimeout(() => inputRef.current?.focus(), 50);
                       }}
                       className="flex items-center gap-3 px-4 py-3 rounded-2xl border bg-card border-border hover:border-primary/30 hover:bg-secondary/40 text-left transition-all hover:-translate-y-0.5"
                     >
@@ -682,11 +781,10 @@ export function StudyClient({
                 </div>
                 <div className="p-3">
                   <input
-                    autoFocus
                     value={noteSearch}
                     onChange={(e) => setNoteSearch(e.target.value)}
                     placeholder="Search notes..."
-                    className="w-full px-3 py-2 text-sm bg-secondary/50 rounded-xl outline-none focus:ring-2 focus:ring-primary mb-2 text-foreground"
+                    className="w-full px-3 py-2 text-base md:text-sm bg-secondary/50 rounded-xl outline-none focus:ring-2 focus:ring-primary mb-2 text-foreground"
                   />
                   <div className="max-h-44 overflow-y-auto scrollbar-hide space-y-0.5">
                     {filteredNotes.length === 0 ? (
@@ -704,7 +802,6 @@ export function StudyClient({
                             if (pendingPrompt) {
                               setInput(pendingPrompt);
                               setPendingPrompt(null);
-                              setTimeout(() => inputRef.current?.focus(), 50);
                             }
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-secondary text-left transition-colors"
@@ -742,10 +839,9 @@ export function StudyClient({
                 ref={inputRef}
                 value={input}
                 onChange={(e) => {
-                  setInput(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height =
-                    Math.min(e.target.scrollHeight, 120) + "px";
+                  const v = e.target.value;
+                  setInput(v);
+                  syncInputHeight(e.target, v);
                 }}
                 onPaste={(e) => {
                   e.preventDefault();
@@ -761,22 +857,15 @@ export function StudyClient({
                       const pos = start + text.length;
                       inputRef.current.selectionStart = pos;
                       inputRef.current.selectionEnd = pos;
-                      inputRef.current.style.height = "auto";
-                      inputRef.current.style.height =
-                        Math.min(inputRef.current.scrollHeight, 120) + "px";
+                      syncInputHeight(inputRef.current, newValue);
                     }
                   }, 0);
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder={
-                  attachedNote
-                    ? `Ask about "${attachedNote.title}"...`
-                    : "Ask anything..."
-                }
+                placeholder={inputPlaceholder}
                 disabled={isStreaming}
                 rows={1}
-                className="flex-1 bg-transparent outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 py-1.5 max-h-[120px] scrollbar-hide"
-              />
+                className="flex-1 min-h-6 max-h-40 bg-transparent outline-none resize-none overflow-y-auto text-base md:text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 py-1.5"              />
 
               <button
                 onClick={() => sendMessage()}

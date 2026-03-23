@@ -43,5 +43,14 @@ export default async function StudyPage() {
     .orderBy(asc(notes.updatedAt))
     .limit(100);
 
-  return <StudyClient initialSessions={sessions} userNotes={userNotes} />;
+    return (
+      <StudyClient
+        initialSessions={sessions.map((s) => ({
+          ...s,
+          createdAt: s.createdAt.toISOString(),
+          updatedAt: s.updatedAt.toISOString(),
+        }))}
+        userNotes={userNotes}
+      />
+    );
 }
