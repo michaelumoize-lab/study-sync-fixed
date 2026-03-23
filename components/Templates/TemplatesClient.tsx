@@ -156,7 +156,7 @@ function TemplateModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Lecture Notes, Study Plan..."
-              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground font-semibold transition-all"
+              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-base md:text-sm font-semibold transition-all"
             />
           </div>
 
@@ -169,7 +169,7 @@ function TemplateModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this template for?"
-              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground transition-all"
+              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-base md:text-sm transition-all"
             />
           </div>
 

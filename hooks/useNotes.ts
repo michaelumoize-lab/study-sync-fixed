@@ -95,14 +95,19 @@ export function useNotes(initialNotes: Note[] = []) {
                 hasDraft: updated.hasDraft,
                 draftTitle: updated.draftTitle,
                 draftContent: updated.draftContent,
+                subject: updated.subject,
+                semester: updated.semester,
+                tags: updated.tags,
               }
             : n,
         ),
       );
-      toast.success("Sync complete");
+      window.dispatchEvent(new Event("vault-updated"));
+      if (input.clearDraft) {
+        window.dispatchEvent(new Event("draft-updated"));
+      }
       return true;
     } catch {
-      toast.error("Update failed");
       return false;
     }
   };

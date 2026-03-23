@@ -154,13 +154,13 @@ export function EditNoteModal({
       prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
     );
 
-  // Save changes (promotes draft → real content)
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error("Title is required");
       return;
     }
     setIsSaving(true);
+    const t = toast.loading("Saving...");
     try {
       const input: UpdateNoteInput = {
         title: title.trim(),
@@ -168,11 +168,17 @@ export function EditNoteModal({
         subjectId: selectedSubjectId || null,
         semesterId: selectedSemesterId || null,
         tagIds: selectedTagIds,
+        clearDraft: true,
       };
       const success = await updateNote(note.id, input);
       if (success) {
+        window.dispatchEvent(new Event("vault-updated"));
+        window.dispatchEvent(new Event("draft-updated"));
+
         const updatedSubject = subjects.find((s) => s.id === selectedSubjectId);
-        const updatedSemester = semesters.find((s) => s.id === selectedSemesterId);
+        const updatedSemester = semesters.find(
+          (s) => s.id === selectedSemesterId,
+        );
         onSaved?.({
           ...note,
           title: title.trim(),
@@ -199,9 +205,10 @@ export function EditNoteModal({
             .filter((t) => selectedTagIds.includes(t.id))
             .map((t) => ({ id: t.id, name: t.name, color: t.color ?? null })),
         });
+        toast.success("Changes saved", { id: t });
         onClose();
       } else {
-        toast.error("Failed to save note");
+        toast.error("Failed to save note", { id: t });
       }
     } finally {
       setIsSaving(false);

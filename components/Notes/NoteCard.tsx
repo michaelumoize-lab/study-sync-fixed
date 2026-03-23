@@ -23,6 +23,8 @@ interface NoteCardProps {
   selectedIds?: string[];
   onSelect?: (id: string) => void;
   isSelectionMode?: boolean;
+  /** Skip Framer Motion entry animation (avoids SSR/client markup drift on drafts). */
+  skipEntryAnimation?: boolean;
 }
 
 export function NoteSkeleton() {
@@ -57,6 +59,7 @@ export function NoteCard({
   selectedIds = [],
   onSelect,
   isSelectionMode,
+  skipEntryAnimation,
 }: NoteCardProps) {
   const isSelected = selectedIds.includes(note.id);
   const selectionActive = isSelectionMode || selectedIds.length > 0;
@@ -223,7 +226,9 @@ export function NoteCard({
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
         <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground/60">
           <Calendar className="w-3 h-3" />
-          <span>{new Date(note.createdAt).toLocaleDateString()}</span>
+          <span suppressHydrationWarning>
+            {new Date(note.createdAt).toLocaleDateString()}
+          </span>
         </div>
         {!selectionActive && (
           <div className="flex items-center gap-1 text-primary text-[10px] font-black uppercase opacity-0 group-hover:opacity-100 transition-all">

@@ -1,7 +1,7 @@
 "use client";
 // components/Notes/DraftsClient.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileEdit, Rocket, Trash2, Check } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -13,7 +13,7 @@ import { EditNoteModal } from "@/components/Notes/EditNoteModal";
 import { DeleteModal } from "@/components/Notes/DeleteModal";
 import { useUserSettings } from "@/hooks/useUserSettings";
 
-import { Note, UpdateNoteInput } from "@/types/note";
+import { Note } from "@/types/note";
 
 interface DraftsClientProps {
   initialDrafts: Note[];
@@ -27,8 +27,15 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  /** Avoid SSR/client HTML mismatch for the hover-only Publish control (see NoteCard SSR). */
+  const [publishControlsMounted, setPublishControlsMounted] = useState(false);
 
   const { settings } = useUserSettings();
+
+  useEffect(() => {
+    setPublishControlsMounted(true);
+  }, []);
 
   const displayDrafts = drafts.filter((d) => {
     const q = searchQuery.toLowerCase();
@@ -55,20 +62,36 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
   // Publish draft → moves to vault (status: active)
   // ---------------------------------------------------------------------------
   const publishDraft = async (draft: Note) => {
+    setIsPublishing(true);
     const t = toast.loading("Publishing to vault...");
     try {
+      // Whenever hasDraft is set, promote draft content and clear draft columns in one request.
+      // (Do not gate on status === "active": hasDraft can be true while status is still "draft".)
+      const payload =
+        draft.hasDraft
+          ? {
+              title: (draft.draftTitle ?? draft.title).trim(),
+              content: draft.draftContent ?? draft.content ?? "",
+              clearDraft: true,
+              ...(draft.status === "draft" ? { status: "active" as const } : {}),
+            }
+          : { status: "active" };
+
       const res = await fetch(`/api/vault/${draft.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "active" }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
       setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
       setSelectedNote(null);
       window.dispatchEvent(new Event("vault-updated"));
-      toast.success("Draft published to vault!", { id: t, icon: "🚀" });
+      window.dispatchEvent(new Event("draft-updated"));
+      toast.success("Published to vault!", { id: t, icon: "🚀" });
     } catch {
       toast.error("Publish failed", { id: t });
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -84,6 +107,7 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
       setDeleteId(null);
       setSelectedNote(null);
       window.dispatchEvent(new Event("vault-updated"));
+      window.dispatchEvent(new Event("draft-updated"));
       toast.success("Draft deleted", { id: t });
     } catch {
       toast.error("Delete failed", { id: t });
@@ -109,6 +133,7 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
       setDrafts((prev) => prev.filter((d) => !successIds.includes(d.id)));
       setSelectedIds((prev) => prev.filter((id) => !successIds.includes(id)));
       window.dispatchEvent(new Event("vault-updated"));
+      window.dispatchEvent(new Event("draft-updated"));
       if (failedCount > 0) {
         toast.error(`${failedCount} of ${count} drafts failed to delete`, {
           id: t,
@@ -200,6 +225,7 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
 
                 <NoteCard
                   note={note}
+                  skipEntryAnimation
                   onClick={() => !selectedIds.length && setSelectedNote(note)}
                   onEdit={() => setEditingNote(note)}
                   onDelete={() => setDeleteId(note.id)}
@@ -207,15 +233,20 @@ export function DraftsClient({ initialDrafts }: DraftsClientProps) {
                   onSelect={toggleSelect}
                 />
 
-                {/* Publish button — only for real drafts */}
-                {note.status === "draft" && (
-                  <button
-                    onClick={() => publishDraft(note)}
-                    className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold opacity-0 group-hover/wrap:opacity-100 transition-all hover:opacity-90 shadow-lg shadow-primary/20 z-20"
-                  >
-                    <Rocket className="w-3.5 h-3.5" /> Publish
-                  </button>
-                )}
+                {/* Publish button — for real drafts AND active notes with unsaved draft edits */}
+                {publishControlsMounted &&
+                  (note.status === "draft" ||
+                    (note.hasDraft && note.status === "active")) && (
+                    <button
+                      type="button"
+                      onClick={() => publishDraft(note)}
+                      disabled={isPublishing}
+                      className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold opacity-0 group-hover/wrap:opacity-100 transition-all hover:opacity-90 shadow-lg shadow-primary/20 z-20 disabled:opacity-50"
+                    >
+                      <Rocket className="w-3.5 h-3.5" />
+                      Publish to Vault
+                    </button>
+                  )}
               </div>
             ))}
           </motion.div>

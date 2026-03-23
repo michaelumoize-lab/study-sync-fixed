@@ -19,7 +19,7 @@ export function useVaultCounts() {
 
   const fetchCounts = useCallback(async () => {
     try {
-      const res = await fetch("/api/vault/counts");
+      const res = await fetch("/api/vault/counts", { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
       setCounts(data);

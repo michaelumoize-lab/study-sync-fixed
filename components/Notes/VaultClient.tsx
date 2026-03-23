@@ -16,6 +16,7 @@ import { EditNoteModal } from "@/components/Notes/EditNoteModal";
 import { PdfImportModal } from "@/components/Notes/PdfImportModal";
 
 import { useNotes } from "@/hooks/useNotes";
+import { useUserSettings } from "@/hooks/useUserSettings";
 import { Note } from "@/types/note";
 import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
@@ -59,6 +60,8 @@ export function VaultClient({
     togglePin,
     setNotes,
   } = useNotes(initialNotes);
+
+  const { settings } = useUserSettings();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -305,6 +308,7 @@ export function VaultClient({
               prev.map((n) => (n.id === updated.id ? updated : n)),
             );
           }}
+          autoSaveInterval={settings.autoSaveInterval}
         />
       )}
 

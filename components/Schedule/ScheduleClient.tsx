@@ -175,7 +175,7 @@ function EventModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Study session, Exam, Assignment due..."
-              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground font-semibold transition-all"
+              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-base md:text-sm font-semibold transition-all"
             />
           </div>
 
@@ -188,7 +188,7 @@ function EventModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional details..."
               rows={2}
-              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground resize-none transition-all"
+              className="w-full bg-secondary/50 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-base md:text-sm resize-none transition-all"
             />
           </div>
 
@@ -201,7 +201,7 @@ function EventModal({
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="w-full bg-secondary/50 px-3 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-sm transition-all"
+                className="w-full bg-secondary/50 px-3 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-base md:text-sm transition-all"
               />
             </div>
             <div>
@@ -212,7 +212,7 @@ function EventModal({
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full bg-secondary/50 px-3 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-sm transition-all"
+                className="w-full bg-secondary/50 px-3 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-primary text-foreground text-base md:text-sm transition-all"
               />
             </div>
           </div>
