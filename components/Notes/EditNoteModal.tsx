@@ -172,9 +172,6 @@ export function EditNoteModal({
       };
       const success = await updateNote(note.id, input);
       if (success) {
-        window.dispatchEvent(new Event("vault-updated"));
-        window.dispatchEvent(new Event("draft-updated"));
-
         const updatedSubject = subjects.find((s) => s.id === selectedSubjectId);
         const updatedSemester = semesters.find(
           (s) => s.id === selectedSemesterId,

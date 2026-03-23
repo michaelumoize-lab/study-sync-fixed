@@ -374,9 +374,13 @@ export function StudyClient({
 
   useLayoutEffect(() => {
     const el = inputRef.current;
-    if (!el || input.length > 0) return;
+    if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${measurePlaceholderHeight(el, inputPlaceholder)}px`;
+    if (input.length === 0) {
+      el.style.height = `${measurePlaceholderHeight(el, inputPlaceholder)}px`;
+    } else {
+      el.style.height = `${el.scrollHeight}px`;
+    }
   }, [input, inputPlaceholder]);
 
   useLayoutEffect(() => {
@@ -385,11 +389,11 @@ export function StudyClient({
     const apply = () => {
       const ta = inputRef.current;
       if (!ta) return;
+      ta.style.height = "auto";
       if (ta.value.length === 0) {
-        ta.style.height = "auto";
         ta.style.height = `${measurePlaceholderHeight(ta, inputPlaceholder)}px`;
       } else {
-        syncTextareaHeight(ta);
+        ta.style.height = `${ta.scrollHeight}px`;
       }
     };
     apply();

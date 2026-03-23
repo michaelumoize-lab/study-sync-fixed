@@ -75,7 +75,7 @@ export function NoteCard({
   return (
     <motion.div
       layoutId={`note-${note.id}`}
-      initial={{ opacity: 0, y: 20 }}
+      initial={skipEntryAnimation ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0, scale: isSelected ? 0.98 : 1 }}
       onClick={handleCardClick}
       className={cn(
