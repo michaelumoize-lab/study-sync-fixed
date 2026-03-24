@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRedirectToast } from "@/hooks/useRedirectToast";
 import { authClient } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
-import { BookOpen, Loader2, Eye, EyeOff } from "lucide-react";
+import { BookOpen, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -258,6 +258,17 @@ export function AuthPageClient() {
   return (
     <div className="w-full max-w-md">
       <div className="bg-card border border-border rounded-4xl p-8 shadow-xl">
+        {/* Back to Home Link */}
+        <div className="mb-4 -mt-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+            Back to Home
+          </Link>
+        </div>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 group mb-4">

@@ -115,7 +115,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/terms-of-service.pdf"
+                  href="/terms-of-service"
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   Terms of Service
@@ -123,7 +123,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/data-security.pdf"
+                  href="/data-security"
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   Data Security
