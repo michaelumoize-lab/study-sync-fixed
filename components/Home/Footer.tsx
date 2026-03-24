@@ -123,7 +123,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/data-security"
+                  href="/data-security.pdf"
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   Data Security

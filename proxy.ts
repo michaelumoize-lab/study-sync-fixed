@@ -49,9 +49,9 @@ export default async function middleware(request: NextRequest) {
     "/", // Home/landing page
     "/auth/sign-in", // Sign in page
     "/auth/sign-up", // Sign up page (if you have one)
-    "/privacy-policy",
-    "/terms-of-service",
-    "/data-security",
+    "/privacy-policy.pdf",
+    "/terms-of-service.pdf",
+    "/data-security.pdf",
     "/sitemap.xml",
     "/robots.txt",
   ];
