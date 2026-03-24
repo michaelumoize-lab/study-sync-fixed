@@ -108,7 +108,6 @@ export function VaultClient({
     const loadingToast = toast.loading(`Moving ${count} notes to trash...`);
     const success = await deleteMultipleNotes(selectedIds);
     if (success) {
-      toast.success(`${count} notes moved to trash`, { id: loadingToast });
       setSelectedIds([]);
     } else {
       toast.error("Bulk delete failed", { id: loadingToast });
