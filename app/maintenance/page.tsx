@@ -1,6 +1,17 @@
 // app/maintenance/page.tsx
 import { BookOpen, Clock, Mail } from "lucide-react";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Maintenance | StudySync",
+  description:
+    "StudySync is currently undergoing maintenance. We'll be back soon!",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function MaintenancePage() {
   const maintenanceMessage =

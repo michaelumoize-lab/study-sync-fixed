@@ -107,7 +107,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/privacy-policy.pdf"
+                  href="/privacy-policy"
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   Privacy Policy
