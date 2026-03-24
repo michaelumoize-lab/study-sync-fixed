@@ -2,13 +2,10 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import {
-  Download,
   ChevronRight,
   Shield,
   Lock,
   Server,
-  Key,
-  Users,
   Cloud,
   Cpu,
   CheckCircle,
@@ -50,16 +47,6 @@ export default function DataSecurityPage() {
                 StudySync — Student Study App
               </p>
             </div>
-
-            {/* Download PDF Button */}
-            <a
-              href="/data-security.pdf"
-              download
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors w-full sm:w-auto"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </a>
           </div>
 
           <p className="text-sm text-muted-foreground mt-4">
@@ -223,12 +210,12 @@ export default function DataSecurityPage() {
             </ul>
             <p>
               To report a security vulnerability, please contact us at{" "}
-              <a
-                href="mailto:security@studysync.app"
+              <Link
+                href="mailto:support@studysync.app"
                 className="text-primary hover:underline"
               >
-                security@studysync.app
-              </a>
+                support@studysync.app
+              </Link>
               .
             </p>
           </Section>

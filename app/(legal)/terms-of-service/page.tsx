@@ -36,16 +36,6 @@ export default function TermsOfServicePage() {
                 StudySync — Student Study App
               </p>
             </div>
-
-            {/* Download PDF Button */}
-            <a
-              href="/terms-of-service.pdf"
-              download
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors w-full sm:w-auto"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </a>
           </div>
 
           <p className="text-sm text-muted-foreground mt-4">
@@ -296,20 +286,12 @@ export default function TermsOfServicePage() {
             <div className="bg-secondary/20 rounded-lg p-4 my-4">
               <p className="m-0">
                 <strong>Email:</strong>{" "}
-                <a
+                <Link
                   href="mailto:support@studysync.app"
                   className="text-primary hover:underline"
                 >
                   support@studysync.app
-                </a>
-                <br />
-                <strong>Legal:</strong>{" "}
-                <a
-                  href="mailto:legal@studysync.app"
-                  className="text-primary hover:underline"
-                >
-                  legal@studysync.app
-                </a>
+                </Link>
               </p>
             </div>
           </Section>
