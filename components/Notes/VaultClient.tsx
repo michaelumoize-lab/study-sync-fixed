@@ -169,55 +169,117 @@ export function VaultClient({
       {/* Bulk selection bar */}
       <AnimatePresence>
         {selectedIds.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-center justify-between bg-primary/10 border border-primary/30 p-4 rounded-2xl"
-          >
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleToggleSelectAll}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border hover:border-primary transition-all"
-              >
-                <div
-                  className={`w-4 h-4 rounded-md border flex items-center justify-center ${
-                    selectedIds.length === displayNotes.length
-                      ? "bg-primary border-primary"
-                      : "border-border"
-                  }`}
+          <>
+            {/* Desktop version - appears at top */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="hidden md:flex items-center justify-between gap-4 bg-primary/10 border border-primary/30 p-4 rounded-2xl"
+            >
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleToggleSelectAll}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border hover:border-primary transition-all"
                 >
-                  {selectedIds.length === displayNotes.length && (
-                    <Check className="w-3 h-3 text-primary-foreground stroke-[4px]" />
-                  )}
-                </div>
-                <span className="text-xs font-bold uppercase tracking-tight">
-                  {selectedIds.length === displayNotes.length
-                    ? "Deselect All"
-                    : "Select All"}
+                  <div
+                    className={`w-4 h-4 rounded-md border flex items-center justify-center ${
+                      selectedIds.length === displayNotes.length
+                        ? "bg-primary border-primary"
+                        : "border-border"
+                    }`}
+                  >
+                    {selectedIds.length === displayNotes.length && (
+                      <Check className="w-3 h-3 text-primary-foreground stroke-[4px]" />
+                    )}
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-tight">
+                    {selectedIds.length === displayNotes.length
+                      ? "Deselect All"
+                      : "Select All"}
+                  </span>
+                </button>
+                <span className="text-sm font-medium text-muted-foreground">
+                  <strong className="text-primary">{selectedIds.length}</strong>{" "}
+                  selected
                 </span>
-              </button>
-              <span className="text-sm font-medium text-muted-foreground">
-                <strong className="text-primary">{selectedIds.length}</strong>{" "}
-                selected
-              </span>
-            </div>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSelectedIds([])}
-                className="px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-secondary rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setIsBulkDeleteOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-destructive/90 transition-all"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Delete Selected
-              </button>
-            </div>
-          </motion.div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-secondary rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setIsBulkDeleteOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-destructive/90 transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Delete Selected
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Mobile version - fixed bottom bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-primary/30 p-4 shadow-lg"
+            >
+              <div className="flex flex-col gap-3">
+                {/* Selection info and select all */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={handleToggleSelectAll}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 transition-all active:scale-95"
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-md border flex items-center justify-center ${
+                        selectedIds.length === displayNotes.length
+                          ? "bg-primary border-primary"
+                          : "border-border"
+                      }`}
+                    >
+                      {selectedIds.length === displayNotes.length && (
+                        <Check className="w-3 h-3 text-primary-foreground stroke-[4px]" />
+                      )}
+                    </div>
+                    <span className="text-sm font-medium">
+                      {selectedIds.length === displayNotes.length
+                        ? "Deselect All"
+                        : "Select All"}
+                    </span>
+                  </button>
+
+                  <span className="text-sm text-muted-foreground">
+                    <strong className="text-primary text-base">
+                      {selectedIds.length}
+                    </strong>{" "}
+                    selected
+                  </span>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setSelectedIds([])}
+                    className="flex-1 py-3 text-sm font-medium border border-border rounded-xl hover:bg-secondary transition-colors active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setIsBulkDeleteOpen(true)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-destructive text-destructive-foreground rounded-xl text-sm font-medium hover:bg-destructive/90 transition-all active:scale-95"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete ({selectedIds.length})
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
