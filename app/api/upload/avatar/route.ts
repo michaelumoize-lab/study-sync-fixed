@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData();
   const file = formData.get("file");
-  const oldUrl = formData.get("oldUrl") as string | null;
 
   if (!(file instanceof File))
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -32,12 +31,26 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
 
-  // Delete previous blob before uploading new one
-  if (oldUrl?.includes("vercel-storage.com")) {
-    await del(oldUrl);
+  // Get the current image URL from the session — no DB import needed
+  const currentImage = session.user.image ?? null;
+
+  // Delete the old blob regardless of extension
+  if (currentImage && currentImage.includes("vercel-storage.com")) {
+    try {
+      await del(currentImage);
+    } catch {
+      // Non-fatal: old blob may already be gone
+    }
   }
 
-  const ext = file.type.split("/")[1];
+  const extMap: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+  };
+  const ext = extMap[file.type] ?? "jpg";
+
   const blob = await put(`avatars/${session.user.id}.${ext}`, file, {
     access: "public",
     allowOverwrite: true,
@@ -46,17 +59,21 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ url: blob.url });
 }
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE() {
   const { data: session } = await auth.getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { url } = await req.json();
+  // Get current image from session — no client URL needed
+  const currentImage = session.user.image ?? null;
 
-  if (!url || !url.includes("vercel-storage.com"))
-    return NextResponse.json({ error: "Invalid blob URL" }, { status: 400 });
-
-  await del(url);
+  if (currentImage && currentImage.includes("vercel-storage.com")) {
+    try {
+      await del(currentImage);
+    } catch {
+      // Non-fatal
+    }
+  }
 
   return NextResponse.json({ success: true });
 }

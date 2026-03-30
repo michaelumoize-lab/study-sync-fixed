@@ -1,6 +1,6 @@
 "use client";
 // components/Settings/SettingsClient.tsx
-
+import dynamic from "next/dynamic";
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
@@ -25,8 +25,12 @@ import { authClient } from "@/lib/auth/client";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { DeleteAccountCard } from "@neondatabase/auth/react";
 import Image from "next/image";
+
+const DeleteAccountCard = dynamic(
+  () => import("@neondatabase/auth/react").then((mod) => mod.DeleteAccountCard),
+  { ssr: false },
+);
 
 // ---------------------------------------------------------------------------
 // Types
@@ -145,17 +149,18 @@ function AvatarUploader({
 }: {
   currentImage?: string | null;
   initials: string;
-  onUploaded: (url: string) => void;
+  onUploaded: (url: string | null) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  // `displayImage` is the committed URL (either the initial one or the latest upload).
+  // We never store object URLs in state — we swap straight to the real URL on success.
+  const [displayImage, setDisplayImage] = useState<string | null>(
+    currentImage ?? null,
+  );
   const [uploading, setUploading] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Always tracks the most recent live URL (uploaded this session or the initial one)
-  const liveUrlRef = useRef<string | null>(currentImage ?? null);
-
-  const displayImage = preview ?? (imgError ? null : currentImage);
+  const shownImage = imgError ? null : displayImage;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -171,8 +176,9 @@ function AvatarUploader({
       return;
     }
 
+    // Show a temporary preview while uploading, then replace with the real URL
     const objectUrl = URL.createObjectURL(file);
-    setPreview(objectUrl);
+    setDisplayImage(objectUrl);
     setImgError(false);
     setUploading(true);
     const toastId = toast.loading("Uploading avatar...");
@@ -180,11 +186,7 @@ function AvatarUploader({
     try {
       const formData = new FormData();
       formData.append("file", file);
-
-      // Pass the current live URL so the server can delete the old blob
-      if (liveUrlRef.current?.includes("vercel-storage.com")) {
-        formData.append("oldUrl", liveUrlRef.current);
-      }
+      // NOTE: we no longer send oldUrl — the server looks it up from the DB
 
       const res = await fetch("/api/upload/avatar", {
         method: "POST",
@@ -201,16 +203,19 @@ function AvatarUploader({
       });
       if (updateError) throw new Error(updateError.message);
 
-      // Update the live URL ref so subsequent uploads/removals use the new URL
-      liveUrlRef.current = url;
+      // Revoke the temporary object URL now that we have the real one
+      URL.revokeObjectURL(objectUrl);
+
+      setDisplayImage(url);
       onUploaded(url);
       toast.success("Avatar updated!", { id: toastId });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Avatar upload failed", {
         id: toastId,
       });
-      setPreview(null);
+      // Revert preview back to whatever was showing before
       URL.revokeObjectURL(objectUrl);
+      setDisplayImage(currentImage ?? null);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -221,24 +226,19 @@ function AvatarUploader({
     setUploading(true);
     const toastId = toast.loading("Removing avatar...");
     try {
-      // Delete from Vercel Blob if it's a Vercel URL
-      if (liveUrlRef.current?.includes("vercel-storage.com")) {
-        const res = await fetch("/api/upload/avatar", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: liveUrlRef.current }),
-        });
-        if (!res.ok) throw new Error("Failed to delete blob");
-      }
+      // Server derives the blob URL from the DB — no URL sent from client
+      const res = await fetch("/api/upload/avatar", {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete avatar");
 
-      // Clear from Neon Auth
-      const { error } = await authClient.updateUser({ image: "" });
+      // Pass null explicitly so Better Auth clears the field
+      const { error } = await authClient.updateUser({ image: null });
       if (error) throw new Error(error.message);
 
-      liveUrlRef.current = null;
-      setPreview(null);
+      setDisplayImage(null);
       setImgError(false);
-      onUploaded("");
+      onUploaded(null);
       toast.success("Avatar removed", { id: toastId });
     } catch (err) {
       toast.error(
@@ -254,9 +254,9 @@ function AvatarUploader({
     <div className="flex items-center gap-5">
       <div className="relative shrink-0">
         <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-xl overflow-hidden">
-          {displayImage ? (
+          {shownImage ? (
             <Image
-              src={displayImage}
+              src={shownImage}
               priority
               alt="Avatar"
               width={64}
@@ -282,10 +282,10 @@ function AvatarUploader({
           className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-secondary border border-border hover:border-primary/30 text-sm font-bold transition-all disabled:opacity-50"
         >
           <Camera className="w-4 h-4" />
-          {displayImage ? "Change photo" : "Upload photo"}
+          {shownImage ? "Change photo" : "Upload photo"}
         </button>
 
-        {displayImage && (
+        {shownImage && (
           <button
             onClick={handleRemove}
             disabled={uploading}
@@ -332,7 +332,6 @@ export function SettingsClient({
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  // Track current avatar URL so the profile card reflects uploads instantly
   const [avatarUrl, setAvatarUrl] = useState<string | null>(userImage ?? null);
 
   const applyTheme = (t: string) => {
@@ -390,7 +389,7 @@ export function SettingsClient({
         <AvatarUploader
           currentImage={avatarUrl}
           initials={initials}
-          onUploaded={(url) => setAvatarUrl(url || null)}
+          onUploaded={(url) => setAvatarUrl(url)}
         />
 
         {/* Name / email summary */}
@@ -473,7 +472,7 @@ export function SettingsClient({
               label: "System",
               description: "Follows your OS preference",
               preview: (
-                <div className="w-7 h-5 rounded-lg bg-gradient-to-r from-white to-zinc-900 border border-border shrink-0" />
+                <div className="w-7 h-5 rounded-lg bg-linear-to-r from-white to-zinc-900 border border-border shrink-0" />
               ),
             },
           ].map((opt) => (
