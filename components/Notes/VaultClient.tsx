@@ -133,7 +133,9 @@ export function VaultClient({
   };
 
   return (
-    <div className="space-y-8">
+    <div
+      className={`space-y-8 ${selectedIds.length > 0 ? "pb-32 md:pb-0" : ""}`}
+    >
       <div className="flex items-start justify-between gap-4">
         <NotesHeader
           title="Your Vault"
@@ -172,6 +174,7 @@ export function VaultClient({
           <>
             {/* Desktop version - appears at top */}
             <motion.div
+              key="bulk-bar-desktop"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -223,6 +226,7 @@ export function VaultClient({
 
             {/* Mobile version - fixed bottom bar */}
             <motion.div
+              key="bulk-bar-mobile"
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
