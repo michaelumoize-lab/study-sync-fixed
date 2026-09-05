@@ -2,7 +2,7 @@
 
 import { Edit3, RefreshCcw, ArrowRight, FolderPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth-client";
 
 const steps = [
   {

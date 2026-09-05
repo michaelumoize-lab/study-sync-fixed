@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useSyncExternalStore } from "react";
 import { Clock, Menu } from "lucide-react";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth-client";
 import { ModeToggle } from "@/components/Shared/ModeToggle";
 import { SignOutButton } from "@/components/Shared/SignOutButton";
 import { motion, AnimatePresence } from "framer-motion";

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth-client";
 
 export default function WelcomePage() {
   const router = useRouter();

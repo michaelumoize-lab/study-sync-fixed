@@ -2,7 +2,7 @@
 
 import { ArrowRight, Sparkles, ShieldCheck, Zap, Edit3 } from "lucide-react";
 import Link from "next/link";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth-client";
 import dynamic from "next/dynamic";
 
 const HeroMockup = dynamic(() => import("./HeroMockup"), { ssr: false });

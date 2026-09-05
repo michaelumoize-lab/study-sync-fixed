@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRedirectToast } from "@/hooks/useRedirectToast";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { BookOpen, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Link from "next/link";

@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, BookOpen } from "lucide-react";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth-client";
 import { ModeToggle } from "@/components/Shared/ModeToggle";
 
 const GUEST_LINKS = [

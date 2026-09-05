@@ -1,14 +1,9 @@
-import { AccountView } from "@neondatabase/auth/react";
-import { accountViewPaths } from "@neondatabase/auth/react/ui/server";
 import Link from "next/link";
 import { ArrowLeft, LayoutGrid, Home } from "lucide-react";
+import { Settings } from "@/components/auth/settings/settings";
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 export const dynamic = "force-dynamic";
-
-export function generateStaticParams() {
-  return Object.values(accountViewPaths).map((path) => ({ path }));
-}
 
 export default async function AccountPage({
   params,
@@ -18,7 +13,7 @@ export default async function AccountPage({
   const { path } = await params;
 
   return (
-    <main className="container p-4 md:p-6">
+    <main className="container p-4 md:p-6 max-w-3xl mx-auto">
       {/* Back nav */}
       <div className="flex items-center gap-3 mb-8">
         <Link
@@ -48,7 +43,7 @@ export default async function AccountPage({
         </Link>
       </div>
 
-      <AccountView path={path} />
+      <Settings path={path} />
     </main>
   );
 }
