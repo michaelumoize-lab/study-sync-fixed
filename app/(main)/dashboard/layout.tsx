@@ -1,120 +1,52 @@
-"use client";
-
-import { Sidebar } from "@/components/Shared/Sidebar";
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import AppNavbar from "@/components/Shared/AppNavbar";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/server";
+import { AppSidebar } from "@/components/Shared/AppSidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeToggle } from "@/components/theme-toggle";
 import ScrollToTop from "@/components/Shared/ScrollToTop";
-import { SidebarContext } from "@/context/SidebarContext";
 
+export const metadata: Metadata = {
+  title: "Dashboard | StudySync",
+  robots: { index: false, follow: false },
+};
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  const pathname = usePathname();
+}: Readonly<{ children: React.ReactNode }>) {
+  const { data: session } = await auth.getSession();
 
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    // Initialize based on current pathname
-    return (
-      pathname === "/dashboard" ||
-      pathname === "/dashboard/study" ||
-      pathname === "/dashboard/focus-mode"
-    );
-  });
-
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  // false on server + first client paint — matches marginLeft 0px; effect sets real value after mount.
-  const [isDesktop, setIsDesktop] = useState(false);
-  const [previousPathname, setPreviousPathname] = useState(pathname);
-
-  // Handle pathname changes - use useEffect with proper cleanup
-  useEffect(() => {
-    if (pathname !== previousPathname) {
-      //eslint-disable-next-line react-hooks/exhaustive-deps
-      setPreviousPathname(pathname);
-      setIsMobileOpen(false);
-      setIsCollapsed(
-        pathname === "/dashboard" ||
-          pathname === "/dashboard/study" ||
-          pathname === "/dashboard/focus-mode",
-      );
-    }
-  }, [pathname, previousPathname]);
-
-  useEffect(() => {
-    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
-    checkDesktop();
-    window.addEventListener("resize", checkDesktop);
-    return () => window.removeEventListener("resize", checkDesktop);
-  }, []);
+  if (!session?.user) {
+    redirect("/auth/sign-in");
+  }
 
   return (
-    <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
-      <>
+    <TooltipProvider delayDuration={0}>
+      <SidebarProvider>
         <ScrollToTop />
-        <div
-          className="flex min-h-screen bg-sidebar font-outfit overflow-x-hidden"
-          style={
-            {
-              "--sidebar-width": isCollapsed ? "80px" : "288px",
-            } as React.CSSProperties
-          }
-        >
-          {/* Mobile backdrop */}
-          <AnimatePresence>
-            {isMobileOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsMobileOpen(false)}
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
-              />
-            )}
-          </AnimatePresence>
-
-          <Sidebar
-            isCollapsed={isCollapsed}
-            setIsCollapsed={setIsCollapsed}
-            isMobileOpen={isMobileOpen}
-          />
-
-          <AppNavbar
-            isCollapsed={isCollapsed}
-            onMobileSidebarToggle={() => setIsMobileOpen(true)}
-          />
-
-          <motion.main
-            initial={false}
-            animate={{
-              marginLeft: isDesktop
-                ? isCollapsed
-                  ? "80px"
-                  : "288px"
-                : "0px",
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="flex-1 min-w-0 w-full"
-          >
-            <div className="max-w-5xl mx-auto px-6 md:px-10 pt-24 pb-20">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={pathname}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {children}
-                </motion.div>
-              </AnimatePresence>
+        <AppSidebar user={session.user} />
+        <SidebarInset className="flex h-screen flex-col overflow-hidden">
+          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background px-4 sm:px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="h-4 hidden sm:block" />
+              <h1 className="text-xs font-semibold truncate sm:text-sm">
+                Dashboard
+              </h1>
             </div>
-          </motion.main>
-        </div>
-      </>
-    </SidebarContext.Provider>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }

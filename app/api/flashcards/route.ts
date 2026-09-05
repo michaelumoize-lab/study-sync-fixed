@@ -8,7 +8,7 @@ import Groq from "groq-sdk";
 
 export const dynamic = "force-dynamic";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy-key-for-build" });
 
 // GET /api/flashcards — list all decks with card counts
 export async function GET() {

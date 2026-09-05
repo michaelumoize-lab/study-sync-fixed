@@ -1,39 +1,127 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  BookOpen,
-} from "lucide-react";
+import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import type {
-  SidebarProps,
-  SidebarLinkProps,
-  SidebarLinkConfig,
-} from "@/types/sidebar";
-import { DASHBOARD_LINK, SIDEBAR_GROUPS } from "@/constants/sidebar";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Search,
+  Home,
+  GraduationCap,
+  FolderArchive,
+  Sparkles,
+  Bot,
+  HelpCircle,
+  Layers,
+  Brain,
+  RotateCcw,
+  BarChart3,
+  PenLine,
+  Clock,
+  Trash2,
+  ChevronRight,
+  BookOpen,
+  Settings,
+  LogOut,
+  Loader2,
+  LucideIcon,
+  Zap,
+} from "lucide-react";
+import { useSignOut } from "@/hooks/use-sign-out";
 import { useVaultCounts } from "@/hooks/useVaultCounts";
+import { authClient } from "@/lib/auth-client";
+import { UserAvatar } from "@/components/user-avatar";
+import {
+  Sidebar as ShadcnSidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarSeparator,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from "@/components/ui/command";
 
-export function Sidebar({
-  isCollapsed,
-  setIsCollapsed,
-  isMobileOpen,
-}: SidebarProps) {
+interface AppSidebarProps extends React.ComponentProps<typeof ShadcnSidebar> {
+  user?: any;
+  isCollapsed?: boolean;
+  setIsCollapsed?: (val: boolean) => void;
+  isMobileOpen?: boolean;
+}
+
+interface SubNavItem {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  exact?: boolean;
+}
+
+interface NavItem {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  countKey?: "noteCount" | "draftCount" | "deletedCount";
+  exact?: boolean;
+  subItems?: SubNavItem[];
+}
+
+export function AppSidebar({ user: userProp, className, ...props }: AppSidebarProps) {
   const pathname = usePathname();
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    Notes: true,
-    Library: true,
-    Study: true,
-    Account: true,
-  });
+  const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const { signOut, isLoading } = useSignOut();
+  const { data: session } = authClient.useSession();
+  const { vaultCount, draftCount, deletedCount } = useVaultCounts();
 
-  const { vaultCount, draftCount, deletedCount, loading } = useVaultCounts();
+  const [commandOpen, setCommandOpen] = React.useState(false);
+
+  // Auto-open Study sub-menu if current route is within Study or Flashcards
+  const isStudyActive =
+    pathname.startsWith("/dashboard/study") ||
+    pathname.startsWith("/dashboard/flashcards");
+  const [studyOpen, setStudyOpen] = React.useState(true);
+
+  React.useEffect(() => {
+    if (isStudyActive) {
+      setStudyOpen(true);
+    }
+  }, [isStudyActive]);
+
+  // Global ⌘K / Ctrl+K keyboard shortcut
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const user = userProp || session?.user;
 
   const counts: Record<string, number> = {
     noteCount: vaultCount,
@@ -41,261 +129,479 @@ export function Sidebar({
     deletedCount,
   };
 
-  const toggleGroup = (section: string) => {
-    if (collapsed) return;
-    setOpenGroups((prev) => ({ ...prev, [section]: !prev[section] }));
+  const handleLogout = async () => {
+    await signOut();
   };
 
-  const checkActive = (href: string, type?: SidebarLinkConfig["checkType"]) =>
-    type === "startsWith" ? pathname.startsWith(href) : pathname === href;
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
-  const collapsed = isCollapsed && !isMobileOpen;
+  const handleCommandSelect = (href: string) => {
+    setCommandOpen(false);
+    handleNavClick();
+    router.push(href);
+  };
+
+  const isItemActive = (href: string, exact: boolean = false) => {
+    if (exact || href === "/dashboard") {
+      return pathname === href;
+    }
+    return pathname.startsWith(href);
+  };
+
+  // 1. Primary "Study System" Navigation
+  const primaryNavItems: NavItem[] = [
+    {
+      title: "Home",
+      href: "/dashboard",
+      icon: Home,
+      exact: true,
+    },
+    {
+      title: "My Courses",
+      href: "/dashboard/courses",
+      icon: GraduationCap,
+    },
+    {
+      title: "Vault",
+      href: "/dashboard/vault",
+      icon: FolderArchive,
+      countKey: "noteCount",
+    },
+  ];
+
+  // 2. Study Sub-items
+  const studySubItems: SubNavItem[] = [
+    {
+      title: "AI Tutor",
+      href: "/dashboard/study",
+      icon: Bot,
+      exact: true,
+    },
+    {
+      title: "Quizzes",
+      href: "/dashboard/study/quizzes",
+      icon: HelpCircle,
+    },
+    {
+      title: "Flashcards",
+      href: "/dashboard/flashcards",
+      icon: Layers,
+    },
+    {
+      title: "Practice",
+      href: "/dashboard/study/practice",
+      icon: Brain,
+    },
+  ];
+
+  // 3. Review & Progress
+  const learningEngineItems: NavItem[] = [
+    {
+      title: "Review",
+      href: "/dashboard/review",
+      icon: RotateCcw,
+    },
+    {
+      title: "Progress",
+      href: "/dashboard/progress",
+      icon: BarChart3,
+    },
+  ];
+
+  // 4. Secondary Navigation
+  const secondaryNavItems: NavItem[] = [
+    {
+      title: "Workspace",
+      href: "/dashboard/workspace",
+      icon: PenLine,
+      countKey: "draftCount",
+    },
+    {
+      title: "Recent",
+      href: "/dashboard/recent",
+      icon: Clock,
+    },
+    {
+      title: "Recently Deleted",
+      href: "/dashboard/recently-deleted",
+      icon: Trash2,
+      countKey: "deletedCount",
+    },
+  ];
 
   return (
     <>
-      {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{
-          width: collapsed ? 80 : 288,
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-sidebar-border transition duration-300",
-          // Mobile: slide in/out via Tailwind translate
-          isMobileOpen ? "translate-x-0" : "-translate-x-full",
-          // Desktop: always visible, override the mobile translate
-          "md:translate-x-0",
-          isMobileOpen ? "shadow-2xl" : "md:shadow-none",
-        )}
-      >
-        {/* Collapse toggle — desktop only */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden md:flex absolute -right-3 top-[72px] z-30 bg-card border border-border rounded-full p-1 shadow-md hover:scale-110 transition-transform"
-        >
-          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
-
-        {/* Header */}
-        <div
-          className={cn(
-            "shrink-0 px-6 pt-6 pb-3",
-            collapsed && "flex flex-col items-center px-0",
-          )}
-        >
-          <div
-            className={cn(
-              "flex items-center gap-2.5 mb-4",
-              collapsed && "justify-center",
-            )}
-          >
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="bg-primary p-1.5 rounded-lg shrink-0">
-                <BookOpen className="w-4 h-4 text-primary-foreground" />
-              </div>
-
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="font-black text-lg tracking-tight text-foreground whitespace-nowrap"
-                >
-                  StudySync
-                </motion.span>
-              )}
-            </Link>
-          </div>
-          <div
-            className={cn("h-px bg-border/60", collapsed ? "w-8" : "w-full")}
-          />
-        </div>
-
-        {/* Scrollable nav */}
-        <div
-          className={cn(
-            "flex-1 overflow-y-auto px-4 py-2 custom-scrollbar",
-            collapsed && "flex flex-col items-center px-2",
-          )}
-        >
-          <div className="mb-3 w-full">
-            <SidebarLink
-              href={DASHBOARD_LINK.href}
-              icon={DASHBOARD_LINK.icon}
-              label={DASHBOARD_LINK.label}
-              active={checkActive(DASHBOARD_LINK.href)}
-              activeColor={DASHBOARD_LINK.activeColor}
-              isCollapsed={collapsed}
-              loading={false}
-            />
-          </div>
-
-          <div className="w-full space-y-1">
-            {SIDEBAR_GROUPS.map((group) => {
-              const isOpen = openGroups[group.section] ?? true;
-              const hasActiveLink = group.links.some((link) =>
-                checkActive(link.href, link.checkType),
-              );
-
-              return (
-                <div key={group.section} className="mb-1">
-                  {!collapsed ? (
-                    <button
-                      onClick={() => toggleGroup(group.section)}
-                      className={cn(
-                        "w-full flex items-center justify-between px-2 py-1.5 rounded-xl transition-colors",
-                        hasActiveLink
-                          ? "text-foreground"
-                          : "text-muted-foreground/50 hover:text-muted-foreground",
-                      )}
-                    >
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">
-                        {group.section}
+      <ShadcnSidebar collapsible="icon" className={className} {...props}>
+        {/* Sticky Header with Logo */}
+        <SidebarHeader className="shrink-0 border-b border-sidebar-border gap-2 p-3">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <Link href="/" onClick={handleNavClick}>
+                  <div className="flex items-center gap-2.5">
+                    <div className="bg-primary p-1.5 rounded-xl shrink-0 flex items-center justify-center text-primary-foreground shadow-xs">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                      <span className="font-black text-base tracking-tight text-foreground whitespace-nowrap">
+                        StudySync
                       </span>
-                      <motion.div
-                        animate={{ rotate: isOpen ? 0 : -90 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronDown size={12} className="opacity-60" />
-                      </motion.div>
-                    </button>
-                  ) : (
-                    <div className="h-px bg-border/40 my-2 mx-1" />
-                  )}
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        Smart Study System
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
 
-                  <AnimatePresence initial={false}>
-                    {(isOpen || collapsed) && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="space-y-0.5 pt-0.5 pb-1">
-                          {group.links.map((link) => (
-                            <SidebarLink
-                              key={link.href}
-                              href={link.href}
-                              icon={link.icon}
-                              label={link.label}
-                              active={checkActive(link.href, link.checkType)}
-                              activeColor={link.activeColor}
-                              isCollapsed={collapsed}
-                              loading={loading}
-                              isDraft={link.isDraft}
-                              count={
-                                link.countKey
-                                  ? counts[link.countKey]
-                                  : undefined
-                              }
-                            />
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="shrink-0 px-4 pb-6 pt-2">
-          <div
-            className={cn(
-              "p-3 rounded-2xl bg-card border border-border flex items-center transition-all",
-              collapsed ? "justify-center" : "gap-3",
-            )}
-          >
-            <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col overflow-hidden"
+          {/* Search / ⌘K Button */}
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setCommandOpen(true)}
+                tooltip="Search StudySync (⌘K)"
+                className="w-full bg-sidebar-accent/50 border border-sidebar-border hover:bg-sidebar-accent transition-colors rounded-xl h-9 px-2.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center"
               >
-                <span className="text-[10px] font-black text-foreground uppercase tracking-wider whitespace-nowrap">
-                  Vault Synced
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground font-medium truncate flex-1 text-left group-data-[collapsible=icon]:hidden">
+                  Search StudySync...
                 </span>
-                <span className="text-[9px] text-muted-foreground font-medium whitespace-nowrap">
-                  Protected
-                </span>
-              </motion.div>
-            )}
+                <kbd className="pointer-events-none hidden h-5 select-none items-center gap-0.5 rounded border border-sidebar-border bg-background/80 px-1.5 font-mono text-[10px] font-semibold text-muted-foreground group-data-[collapsible=icon]:hidden sm:inline-flex">
+                  <span className="text-[10px]">⌘</span>K
+                </kbd>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+
+        {/* Navigation Content */}
+        <SidebarContent className="flex-1 overflow-y-auto px-2 py-2 gap-1">
+          {/* Main Study System Group */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 px-2 mb-1">
+              Study System
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {/* Home, Courses, Vault */}
+                {primaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = isItemActive(item.href, item.exact);
+                  const count = item.countKey ? counts[item.countKey] : undefined;
+
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.title}
+                        className="rounded-xl font-medium"
+                      >
+                        <Link href={item.href} onClick={handleNavClick}>
+                          <Icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                          {count !== undefined && count > 0 && (
+                            <SidebarMenuBadge>{count}</SidebarMenuBadge>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+
+                {/* Collapsible Study Node */}
+                <Collapsible
+                  open={studyOpen}
+                  onOpenChange={setStudyOpen}
+                  className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        isActive={isStudyActive}
+                        tooltip="Study"
+                        className="rounded-xl font-medium w-full"
+                      >
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <span>Study</span>
+                        <ChevronRight className="ml-auto h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden text-muted-foreground" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub className="my-1 ml-4 border-l border-sidebar-border/70 pl-2">
+                        {studySubItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          const isSubActive = isItemActive(
+                            subItem.href,
+                            subItem.exact,
+                          );
+
+                          return (
+                            <SidebarMenuSubItem key={subItem.href}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={isSubActive}
+                                className="rounded-lg text-xs font-medium h-8"
+                              >
+                                <Link
+                                  href={subItem.href}
+                                  onClick={handleNavClick}
+                                >
+                                  <SubIcon className="h-3.5 w-3.5" />
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+
+                {/* Review & Progress */}
+                {learningEngineItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = isItemActive(item.href, item.exact);
+
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.title}
+                        className="rounded-xl font-medium"
+                      >
+                        <Link href={item.href} onClick={handleNavClick}>
+                          <Icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Separator between Core and Secondary */}
+          <div className="py-2 px-2">
+            <SidebarSeparator className="bg-sidebar-border/60" />
           </div>
-        </div>
-      </motion.aside>
+
+          {/* Secondary Group: Workspace, Recent, Recently Deleted */}
+          <SidebarGroup className="p-0">
+            <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 px-2 mb-1">
+              Workspace & History
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {secondaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = isItemActive(item.href, item.exact);
+                  const count = item.countKey ? counts[item.countKey] : undefined;
+
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.title}
+                        className="rounded-xl font-medium"
+                      >
+                        <Link href={item.href} onClick={handleNavClick}>
+                          <Icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                          {count !== undefined && count > 0 && (
+                            <SidebarMenuBadge>{count}</SidebarMenuBadge>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        {/* Sticky Footer with User Avatar, Settings & Logout */}
+        <SidebarFooter className="shrink-0 border-t border-sidebar-border p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <div className="flex items-center gap-2 p-1 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
+                <UserAvatar user={(user as any) ?? undefined} className="h-8 w-8 shrink-0 rounded-lg" />
+                <div className="grid flex-1 text-left text-xs leading-tight group-data-[collapsible=icon]:hidden min-w-0">
+                  <span className="truncate font-semibold text-foreground">
+                    {user?.name || user?.email || "Student"}
+                  </span>
+                  <span className="truncate text-[11px] text-muted-foreground">
+                    {user?.email || "Signed In"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 group-data-[collapsible=icon]:hidden">
+                  <SidebarMenuButton
+                    size="sm"
+                    asChild
+                    tooltip="Settings"
+                    className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Link href="/dashboard/settings" onClick={handleNavClick}>
+                      <Settings className="h-4 w-4" />
+                      <span className="sr-only">Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  <SidebarMenuButton
+                    size="sm"
+                    className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-destructive cursor-pointer"
+                    onClick={handleLogout}
+                    disabled={isLoading}
+                    tooltip="Logout"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">Logout</span>
+                  </SidebarMenuButton>
+                </div>
+              </div>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </ShadcnSidebar>
+
+      {/* Global ⌘K Command Dialog */}
+      <CommandDialog
+        open={commandOpen}
+        onOpenChange={setCommandOpen}
+        title="Global Search"
+        description="Search across courses, materials, concepts and actions"
+      >
+        <CommandInput placeholder="Search StudySync or type a command..." />
+        <CommandList className="max-h-[350px]">
+          <CommandEmpty>No results found.</CommandEmpty>
+
+          {/* AI Shortcuts */}
+          <CommandGroup heading="AI Intelligence">
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/study")}
+              className="cursor-pointer gap-2.5"
+            >
+              <Bot className="h-4 w-4 text-primary" />
+              <span>Ask StudySync AI</span>
+              <CommandShortcut>AI</CommandShortcut>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/study")}
+              className="cursor-pointer gap-2.5"
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Explain a Concept</span>
+            </CommandItem>
+          </CommandGroup>
+
+          <CommandSeparator />
+
+          {/* Quick Learning Actions */}
+          <CommandGroup heading="Actions">
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/review")}
+              className="cursor-pointer gap-2.5"
+            >
+              <RotateCcw className="h-4 w-4 text-amber-500" />
+              <span>Start Today&apos;s Review</span>
+              <CommandShortcut>Due</CommandShortcut>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/study/quizzes")}
+              className="cursor-pointer gap-2.5"
+            >
+              <HelpCircle className="h-4 w-4 text-blue-500" />
+              <span>Take Adaptive Quiz</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/flashcards")}
+              className="cursor-pointer gap-2.5"
+            >
+              <Layers className="h-4 w-4 text-emerald-500" />
+              <span>Review Flashcards</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/vault")}
+              className="cursor-pointer gap-2.5"
+            >
+              <FolderArchive className="h-4 w-4 text-indigo-500" />
+              <span>Open Knowledge Vault</span>
+            </CommandItem>
+          </CommandGroup>
+
+          <CommandSeparator />
+
+          {/* Navigation Destination */}
+          <CommandGroup heading="Navigate">
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard")}
+              className="cursor-pointer gap-2.5"
+            >
+              <Home className="h-4 w-4" />
+              <span>Home Dashboard</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/courses")}
+              className="cursor-pointer gap-2.5"
+            >
+              <GraduationCap className="h-4 w-4" />
+              <span>My Courses</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/vault")}
+              className="cursor-pointer gap-2.5"
+            >
+              <FolderArchive className="h-4 w-4" />
+              <span>Vault</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/progress")}
+              className="cursor-pointer gap-2.5"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span>Learning Progress & Mastery</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/workspace")}
+              className="cursor-pointer gap-2.5"
+            >
+              <PenLine className="h-4 w-4" />
+              <span>Workspace</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/recent")}
+              className="cursor-pointer gap-2.5"
+            >
+              <Clock className="h-4 w-4" />
+              <span>Recent Materials</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => handleCommandSelect("/dashboard/settings")}
+              className="cursor-pointer gap-2.5"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
     </>
   );
 }
 
-function SidebarLink({
-  href,
-  icon,
-  label,
-  count,
-  active,
-  activeColor,
-  isDraft,
-  loading,
-  isCollapsed,
-}: SidebarLinkProps) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "relative flex items-center w-full p-3 rounded-2xl font-bold transition-all",
-        active
-          ? "text-primary-foreground"
-          : "text-muted-foreground hover:bg-card",
-        isCollapsed ? "justify-center" : "justify-between",
-      )}
-    >
-      {active && (
-        <motion.div
-          layoutId="sidebarTab"
-          className={cn(
-            "absolute inset-0 rounded-2xl shadow-xl shadow-black/5",
-            activeColor,
-          )}
-        />
-      )}
-
-      <div className="relative z-10 flex items-center gap-3">
-        <span className="shrink-0">{icon}</span>
-        {!isCollapsed && (
-          <motion.span
-            initial={{ opacity: 0, x: -5 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="whitespace-nowrap text-sm"
-          >
-            {label}
-          </motion.span>
-        )}
-      </div>
-
-      {!isCollapsed && count !== undefined && (
-        <div className="relative z-10">
-          {loading ? (
-            <div className="w-6 h-5 bg-primary/20 rounded-lg animate-pulse" />
-          ) : (
-            (count > 0 || !isDraft) && (
-              <span
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded-lg",
-                  active
-                    ? "bg-primary-foreground/10"
-                    : "bg-secondary text-muted-foreground",
-                )}
-              >
-                {count}
-              </span>
-            )
-          )}
-        </div>
-      )}
-    </Link>
-  );
-}
+// Re-export for compatibility
+export { AppSidebar as Sidebar };

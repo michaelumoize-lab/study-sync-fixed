@@ -1,7 +1,7 @@
 // app/layout.tsx
 
 import type { Metadata } from "next";
-import { Outfit, Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/Shared/ThemeProvider";
 import { PostHogProvider } from "./PostHogProvider";
 import { Toaster } from "react-hot-toast";
@@ -9,8 +9,15 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+});
 
 const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://www.studysync.website";
@@ -69,7 +76,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", inter.variable, outfit.variable)}
+      className={cn("font-sans", geistSans.variable, geistMono.variable)}
     >
       <body className="font-sans antialiased custom-scrollbar">
         <PostHogProvider>
@@ -84,7 +91,7 @@ export default function RootLayout({
               reverseOrder={false}
               toastOptions={{
                 className:
-                  "font-outfit text-sm font-semibold border border-border dark:bg-[#0d0d0d] dark:text-white",
+                  "font-sans text-sm font-semibold border border-border dark:bg-[#0d0d0d] dark:text-white",
                 style: {
                   borderRadius: "12px",
                   padding: "12px 20px",

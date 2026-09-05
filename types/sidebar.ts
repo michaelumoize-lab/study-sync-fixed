@@ -22,13 +22,14 @@ export interface SidebarLinkConfig {
   label: string;
   href: string;
   icon: ReactNode;
-  activeColor: string;
+  activeColor?: string;
   countKey?: "noteCount" | "draftCount" | "deletedCount";
   isDraft?: boolean;
   checkType?: "startsWith" | "exact";
+  subItems?: SidebarLinkConfig[];
 }
 
 export interface SidebarGroup {
-  section: "Notes" | "Library" | "Study" | "Account";
+  section: "Study System" | "Workspace & History" | "Notes" | "Library" | "Study" | "Account";
   links: SidebarLinkConfig[];
 }

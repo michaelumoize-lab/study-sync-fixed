@@ -7,7 +7,9 @@ import { eq, and } from "drizzle-orm";
 import Groq from "groq-sdk";
 import { ratelimit } from "@/lib/ratelimit";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+export const dynamic = "force-dynamic";
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy-key-for-build" });
 
 const SYSTEM_PROMPT = `You are StudySync AI — a smart, friendly study assistant built into a student note-taking app.
 
