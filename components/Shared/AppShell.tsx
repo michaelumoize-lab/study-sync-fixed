@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ScrollToTop />
-      <div className="flex min-h-screen bg-sidebar font-outfit overflow-x-hidden">
+      <div className="flex min-h-screen bg-sidebar font-sans overflow-x-hidden">
         {/* Mobile backdrop */}
         <AnimatePresence>
           {isMobileOpen && (

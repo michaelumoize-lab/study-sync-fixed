@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { notes } from "@/lib/schema";
 import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy-key-for-build" });
 
 export const dynamic = "force-dynamic";
 

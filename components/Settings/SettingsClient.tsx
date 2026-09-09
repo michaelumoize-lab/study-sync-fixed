@@ -21,16 +21,13 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
 
-const DeleteAccountCard = dynamic(
-  () => import("@neondatabase/auth/react").then((mod) => mod.DeleteAccountCard),
-  { ssr: false },
-);
+import { DangerZone } from "@/components/auth/delete-user/danger-zone";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -548,7 +545,7 @@ export function SettingsClient({
             </div>
           </button>
 
-          <DeleteAccountCard />
+          <DangerZone />
         </div>
       </Section>
 

@@ -6,7 +6,7 @@ import { userSettings } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
 
 export async function POST(req: NextRequest) {
   const { data: session } = await auth.getSession();

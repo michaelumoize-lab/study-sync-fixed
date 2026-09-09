@@ -1,0 +1,690 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===========================================================================
+// 1. AUTHENTICATION (Better Auth - Preserved Exactly)
+// ===========================================================================
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          String?
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
+  sessions      Session[]
+  accounts      Account[]
+
+  // Safe back-relations to StudySync entities
+  courses            Course[]
+  vaultMaterials     VaultMaterial[]
+  flashcards         Flashcard[]
+  flashcardReviews   FlashcardReview[]
+  conceptMastery     UserConceptMastery[]
+  questionAttempts   QuestionAttempt[]
+  userMisconceptions UserMisconception[]
+  studySessions      StudySession[]
+  studySessionEvents StudySessionEvent[]
+  studyPlans         StudyPlan[]
+  studyTasks         StudyTask[]
+  learningGoals      LearningGoal[]
+  exams              Exam[]
+  examSnapshots      ExamReadinessSnapshot[]
+  notes              Note[]
+  tags               Tag[]
+  semesters          Semester[]
+  userSettings       UserSettings?
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  issuer                String
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([issuer, accountId], map: "account_issuer_accountId_uidx")
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ===========================================================================
+// 2. CURRICULUM & CONTENT
+// ===========================================================================
+
+model Semester {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime?
+  endDate   DateTime?
+  isActive  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  courses Course[]
+  notes   Note[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("semesters")
+}
+
+model Course {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semesterId  String?
+  semester    Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+  code        String? // e.g. "CS 301"
+  name        String
+  description String?
+  color       String?
+  icon        String?
+  deletedAt   DateTime? // Soft-delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  units          CourseUnit[]
+  vaultMaterials VaultMaterial[]
+  concepts       Concept[]
+  questions      QuizQuestion[]
+  flashcards     Flashcard[]
+  exams          Exam[]
+  studyPlans     StudyPlan[]
+  studyTasks     StudyTask[]
+  learningGoals  LearningGoal[]
+  studySessions  StudySession[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([userId, semesterId])
+  @@map("courses")
+}
+
+model CourseUnit {
+  id           String       @id @default(uuid())
+  courseId     String
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  parentUnitId String?
+  parentUnit   CourseUnit?  @relation("UnitSubUnits", fields: [parentUnitId], references: [id], onDelete: Cascade)
+  subUnits     CourseUnit[] @relation("UnitSubUnits")
+  name         String
+  order        Int          @default(0)
+  createdAt    DateTime     @default(now())
+
+  studySessions StudySession[]
+
+  @@index([courseId])
+  @@index([courseId, order])
+  @@map("course_units")
+}
+
+model VaultMaterial {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId   String?
+  course     Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  title      String
+  type       String // "pdf" | "slides" | "youtube" | "audio" | "web" | "note"
+  sourceUrl  String?
+  storageKey String?
+  status     String    @default("ready") // "processing" | "ready" | "failed"
+  metadata   Json? // pageCount, durationSeconds, videoId, etc.
+  deletedAt  DateTime? // Soft-delete
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  chunks           MaterialChunk[]
+  conceptMaterials ConceptMaterial[]
+  questionSources  QuestionSource[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([courseId, createdAt])
+  @@map("vault_materials")
+}
+
+model MaterialChunk {
+  id               String                       @id @default(uuid())
+  materialId       String
+  material         VaultMaterial                @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  chunkIndex       Int
+  content          String
+  pageNumber       Int?
+  timestampSeconds Int?
+  embedding        Unsupported("vector(1536)")?
+  createdAt        DateTime                     @default(now())
+
+  conceptMaterials ConceptMaterial[]
+  questionSources  QuestionSource[]
+
+  @@index([materialId])
+  @@index([materialId, chunkIndex])
+  @@map("material_chunks")
+}
+
+model Concept {
+  id               String   @id @default(uuid())
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?
+  importanceWeight Float    @default(1.0)
+  createdAt        DateTime @default(now())
+
+  fromRelationships ConceptRelationship[] @relation("FromConcept")
+  toRelationships   ConceptRelationship[] @relation("ToConcept")
+  conceptMaterials  ConceptMaterial[]
+  userMastery       UserConceptMastery[]
+  questions         QuizQuestion[]
+  flashcards        Flashcard[]
+  misconceptions    Misconception[]
+  questionAttempts  QuestionAttempt[]
+  studyTasks        StudyTask[]
+  studySessions     StudySession[]
+
+  @@unique([courseId, name])
+  @@index([courseId])
+  @@map("concepts")
+}
+
+model ConceptRelationship {
+  id               String   @id @default(uuid())
+  fromConceptId    String
+  fromConcept      Concept  @relation("FromConcept", fields: [fromConceptId], references: [id], onDelete: Cascade)
+  toConceptId      String
+  toConcept        Concept  @relation("ToConcept", fields: [toConceptId], references: [id], onDelete: Cascade)
+  relationshipType String // "prerequisite" | "depends_on" | "related" | "example_of" | "contrasts_with" | "part_of"
+  weight           Float    @default(1.0)
+  createdAt        DateTime @default(now())
+
+  @@unique([fromConceptId, toConceptId, relationshipType])
+  @@index([fromConceptId])
+  @@index([toConceptId])
+  @@map("concept_relationships")
+}
+
+model ConceptMaterial {
+  id         String         @id @default(uuid())
+  conceptId  String
+  concept    Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  materialId String
+  material   VaultMaterial  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  chunkId    String?
+  chunk      MaterialChunk? @relation(fields: [chunkId], references: [id], onDelete: SetNull)
+
+  @@unique([conceptId, materialId, chunkId])
+  @@index([conceptId])
+  @@index([materialId])
+  @@map("concept_materials")
+}
+
+// ===========================================================================
+// 3. LEARNING CONTENT
+// ===========================================================================
+
+model QuestionGenerationRun {
+  id            String   @id @default(uuid())
+  courseId      String
+  conceptId     String?
+  model         String
+  promptVersion String
+  sourceContext Json?
+  generatedAt   DateTime @default(now())
+
+  questions QuizQuestion[]
+
+  @@index([courseId])
+  @@index([conceptId])
+  @@map("question_generation_runs")
+}
+
+model QuizQuestion {
+  id               String                 @id @default(uuid())
+  courseId         String
+  course           Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  conceptId        String
+  concept          Concept                @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  generationRunId  String?
+  generationRun    QuestionGenerationRun? @relation(fields: [generationRunId], references: [id], onDelete: SetNull)
+  questionText     String
+  questionType     String // "multiple_choice" | "short_answer" | "code" | "numeric"
+  options          Json? // [{ id: "a", text: "...", isCorrect: true }]
+  explanation      String
+  difficultyRating Float                  @default(0.5) // 0.1 to 1.0
+  version          Int                    @default(1)
+  deletedAt        DateTime? // Soft-delete
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  sources  QuestionSource[]
+  attempts QuestionAttempt[]
+
+  @@index([courseId])
+  @@index([conceptId])
+  @@index([generationRunId])
+  @@map("quiz_questions")
+}
+
+model QuestionSource {
+  id         String         @id @default(uuid())
+  questionId String
+  question   QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  materialId String
+  material   VaultMaterial  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  chunkId    String?
+  chunk      MaterialChunk? @relation(fields: [chunkId], references: [id], onDelete: SetNull)
+  pageNumber Int?
+  startChar  Int?
+  endChar    Int?
+
+  @@index([questionId])
+  @@index([materialId])
+  @@map("question_sources")
+}
+
+model Flashcard {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String?
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  conceptId String?
+  concept   Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  front     String
+  back      String
+
+  // FSRS spaced repetition state
+  fsrsState     String    @default("new") // "new" | "learning" | "review" | "relearning"
+  stability     Float     @default(0.0)
+  difficulty    Float     @default(0.0)
+  elapsedDays   Int       @default(0)
+  scheduledDays Int       @default(0)
+  reps          Int       @default(0)
+  lapses        Int       @default(0)
+  dueAt         DateTime  @default(now())
+  lastReviewAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  reviews FlashcardReview[]
+
+  @@index([userId])
+  @@index([userId, dueAt])
+  @@index([courseId])
+  @@index([conceptId])
+  @@map("flashcards")
+}
+
+model Exam {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name        String
+  examDate    DateTime
+  targetScore Float?
+  createdAt   DateTime @default(now())
+
+  readinessSnapshots ExamReadinessSnapshot[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([userId, examDate])
+  @@map("exams")
+}
+
+model StudyPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String?
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  goal      String?
+  createdAt DateTime @default(now())
+
+  tasks StudyTask[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@map("study_plans")
+}
+
+model StudyTask {
+  id               String     @id @default(uuid())
+  userId           String
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId           String?
+  plan             StudyPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  courseId         String?
+  course           Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  conceptId        String?
+  concept          Concept?   @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  title            String
+  taskType         String // "spaced_review" | "gap_study" | "quiz" | "practice" | "mock_exam"
+  reasonType       String? // "concept_gap" | "spaced_decay" | "exam_proximity" | "manual"
+  reasonData       Json? // e.g. { mastery: 0.32, examDaysAway: 8 }
+  priorityScore    Float      @default(1.0)
+  estimatedMinutes Int
+  scheduledDate    DateTime
+  isCompleted      Boolean    @default(false)
+  completedAt      DateTime?
+
+  @@index([userId])
+  @@index([userId, scheduledDate])
+  @@index([userId, isCompleted])
+  @@index([courseId])
+  @@map("study_tasks")
+}
+
+model LearningGoal {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String?
+  course      Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  title       String
+  targetType  String // "grade" | "concept_mastery" | "topic_completion"
+  targetValue Float? // e.g. 90.0
+  deadline    DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([courseId])
+  @@map("learning_goals")
+}
+
+// ===========================================================================
+// 4. STUDENT MODEL & INTERACTION LOGS
+// ===========================================================================
+
+model UserConceptMastery {
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conceptId          String
+  concept            Concept   @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  masteryScore       Float     @default(0.0) // 0.0 to 1.0 (Managed by student model engine)
+  confidenceInterval Float     @default(0.5)
+  totalAttempts      Int       @default(0)
+  correctAttempts    Int       @default(0)
+  lastAssessedAt     DateTime?
+
+  @@unique([userId, conceptId])
+  @@index([userId])
+  @@index([conceptId])
+  @@map("user_concept_mastery")
+}
+
+model Misconception {
+  id          String   @id @default(uuid())
+  conceptId   String
+  concept     Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+
+  userMisconceptions UserMisconception[]
+
+  @@index([conceptId])
+  @@map("misconceptions")
+}
+
+model UserMisconception {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  misconceptionId String
+  misconception   Misconception @relation(fields: [misconceptionId], references: [id], onDelete: Cascade)
+  confidence      Float         @default(0.5)
+  occurrences     Int           @default(1)
+  firstDetectedAt DateTime      @default(now())
+  lastDetectedAt  DateTime      @default(now())
+  resolvedAt      DateTime?
+
+  @@unique([userId, misconceptionId])
+  @@index([userId])
+  @@index([misconceptionId])
+  @@map("user_misconceptions")
+}
+
+model QuestionAttempt {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  conceptId     String
+  concept       Concept      @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  response      Json // e.g. { type: "multiple_choice", optionId: "b" } or { type: "code", code: "..." }
+  isCorrect     Boolean
+  score         Float        @default(0.0) // 0.0 to 1.0
+  timeSpentMs   Int
+  confidence    Float?
+  errorCategory String? // "concept_gap" | "calculation" | "misread" | "recall_failure"
+  aiDiagnosis   String?
+  attemptedAt   DateTime     @default(now())
+
+  @@index([userId])
+  @@index([questionId])
+  @@index([conceptId])
+  @@index([userId, attemptedAt])
+  @@map("question_attempts")
+}
+
+model FlashcardReview {
+  id             String    @id @default(uuid())
+  flashcardId    String
+  flashcard      Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating         Int // 1 (Again), 2 (Hard), 3 (Good), 4 (Easy)
+  scheduledAt    DateTime
+  reviewedAt     DateTime  @default(now())
+  responseTimeMs Int
+  previousState  String
+  newState       String
+
+  @@index([flashcardId])
+  @@index([userId])
+  @@index([userId, reviewedAt])
+  @@map("flashcard_reviews")
+}
+
+model ExamReadinessSnapshot {
+  id                 String   @id @default(uuid())
+  examId             String
+  exam               Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score              Float // 0.0 to 100.0
+  calculationVersion String   @default("1.0")
+  calculatedAt       DateTime @default(now())
+
+  @@index([examId])
+  @@index([userId])
+  @@index([examId, calculatedAt])
+  @@map("exam_readiness_snapshots")
+}
+
+model StudySessionEvent {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // "started" | "concept_viewed" | "question_answered" | "flashcard_reviewed" | "hint_requested" | "material_opened" | "completed"
+  metadata  Json?
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([sessionId, createdAt])
+  @@map("study_session_events")
+}
+
+// ===========================================================================
+// 5. AI TUTOR & STUDY SESSIONS
+// ===========================================================================
+
+model StudySession {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId     String?
+  course       Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  courseUnitId String?
+  courseUnit   CourseUnit? @relation(fields: [courseUnitId], references: [id], onDelete: SetNull)
+  conceptId    String?
+  concept      Concept?    @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  title        String?
+  mode         String      @default("tutor") // "tutor" | "quiz" | "practice" | "explain"
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  messages StudyMessage[]
+  events   StudySessionEvent[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([conceptId])
+  @@map("study_sessions")
+}
+
+model StudyMessage {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String // "user" | "assistant" | "system"
+  content   String
+  citations Json? // [{ materialId, chunkId, pageNumber, snippet }]
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId])
+  @@map("study_messages")
+}
+
+// ===========================================================================
+// 6. WORKSPACE & LEGACY COMPATIBILITY
+// ===========================================================================
+
+model Note {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semesterId   String?
+  semester     Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+  title        String
+  content      String?
+  draftTitle   String?
+  draftContent String?
+  hasDraft     Boolean   @default(false)
+  status       String    @default("active") // "active" | "draft" | "deleted"
+  isPinned     Boolean   @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  noteTags NoteTag[]
+
+  @@index([userId])
+  @@index([semesterId])
+  @@map("notes")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+
+  noteTags NoteTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+model NoteTag {
+  noteId String
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tagId  String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+  @@index([noteId])
+  @@index([tagId])
+  @@map("note_tags")
+}
+
+model UserSettings {
+  userId           String    @id
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme            String    @default("system")
+  autoSaveInterval Int       @default(30)
+  studyStreakCount Int       @default(0)
+  lastActiveAt     DateTime?
+  updatedAt        DateTime  @updatedAt
+
+  @@map("user_settings")
+}

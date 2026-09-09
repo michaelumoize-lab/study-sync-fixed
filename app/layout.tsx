@@ -1,18 +1,22 @@
 // app/layout.tsx
 
-import { authClient } from "@/lib/auth/client";
-import { NeonAuthUIProvider } from "@neondatabase/auth/react";
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/Shared/ThemeProvider";
 import { PostHogProvider } from "./PostHogProvider";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+import { Providers } from "@/components/providers";
 
-const outfit = Outfit({
-  variable: "--font-sans",
+const geistSans = Geist({
   subsets: ["latin"],
-  display: "swap",
+  variable: "--font-geist-sans",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
 });
 
 const baseUrl =
@@ -69,7 +73,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${outfit.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn("font-sans", geistSans.variable, geistMono.variable)}
+    >
       <body className="font-sans antialiased custom-scrollbar">
         <PostHogProvider>
           <ThemeProvider
@@ -83,7 +91,7 @@ export default function RootLayout({
               reverseOrder={false}
               toastOptions={{
                 className:
-                  "font-outfit text-sm font-semibold border border-border dark:bg-[#0d0d0d] dark:text-white",
+                  "font-sans text-sm font-semibold border border-border dark:bg-[#0d0d0d] dark:text-white",
                 style: {
                   borderRadius: "12px",
                   padding: "12px 20px",
@@ -102,18 +110,7 @@ export default function RootLayout({
                 },
               }}
             />
-            <NeonAuthUIProvider
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              authClient={authClient as any}
-              redirectTo="/welcome"
-              emailOTP
-              social={{
-                providers: ["google"],
-              }}
-              credentials={{ forgotPassword: true }}
-            >
-              {children}
-            </NeonAuthUIProvider>
+            <Providers>{children}</Providers>
           </ThemeProvider>
         </PostHogProvider>
       </body>

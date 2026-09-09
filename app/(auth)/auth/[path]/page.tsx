@@ -1,32 +1,24 @@
-// app/(auth)/auth/[path]/page.tsx
-import { AuthPageClient } from "@/components/Auth/AuthPageClient";
+import { viewPaths } from "@better-auth-ui/core"
+import { notFound } from "next/navigation"
 
-export const dynamicParams = false;
+import { Auth } from "@/components/auth/auth"
 
-export default async function AuthPage() {
+export default async function AuthPage({
+  params
+}: {
+  params: Promise<{
+    path: string
+  }>
+}) {
+  const { path } = await params
+
+  if (!Object.values(viewPaths.auth).includes(path)) {
+    notFound()
+  }
+
   return (
-    <main className="container min-h-screen mx-auto flex grow flex-col items-center justify-center gap-3 self-center p-4 md:p-6">
-      <AuthPageClient />
-    </main>
-  );
+    <div className="flex justify-center my-auto p-4 md:p-6">
+      <Auth path={path} />
+    </div>
+  )
 }
-
-// import { AuthView } from "@neondatabase/auth/react";
-// import { AuthPageClient } from "@/components/Auth/AuthPageClient";
-
-// export const dynamicParams = false;
-
-// export default async function AuthPage({
-//   params,
-// }: {
-//   params: Promise<{ path: string }>;
-// }) {
-//   const { path } = await params;
-
-//   return (
-//     <main className="container min-h-screen mx-auto flex grow flex-col items-center justify-center gap-3 self-center p-4 md:p-6">
-//       <AuthPageClient />
-//       <AuthView path={path} />
-//     </main>
-//   );
-// }

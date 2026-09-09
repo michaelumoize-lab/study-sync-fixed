@@ -1,135 +1,107 @@
 import {
   Home,
-  LayoutGrid,
-  FileEdit,
+  GraduationCap,
+  FolderArchive,
+  Sparkles,
+  Bot,
+  HelpCircle,
+  Layers,
+  Brain,
+  RotateCcw,
+  BarChart3,
+  PenLine,
   Clock,
   Trash2,
-  BookOpen,
-  Tag,
-  GraduationCap,
-  MessageSquare,
-  Layers,
-  CalendarClock,
-  Settings,
-  FileText,
-  Focus,
 } from "lucide-react";
 import type { SidebarLinkConfig, SidebarGroup } from "@/types/sidebar";
 
-// ---------------------------------------------------------------------------
-// Dashboard (ungrouped — always visible at top)
-// ---------------------------------------------------------------------------
-export const DASHBOARD_LINK: SidebarLinkConfig = {
-  label: "Dashboard",
+export const HOME_LINK: SidebarLinkConfig = {
+  label: "Home",
   href: "/dashboard",
-  icon: <Home className="w-5 h-5" />,
-  activeColor: "bg-primary",
+  icon: <Home className="w-4 h-4" />,
+  checkType: "exact",
 };
 
-// ---------------------------------------------------------------------------
-// Grouped links
-// ---------------------------------------------------------------------------
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
-    section: "Notes",
+    section: "Study System",
     links: [
+      {
+        label: "Home",
+        href: "/dashboard",
+        icon: <Home className="w-4 h-4" />,
+        checkType: "exact",
+      },
+      {
+        label: "My Courses",
+        href: "/dashboard/courses",
+        icon: <GraduationCap className="w-4 h-4" />,
+      },
       {
         label: "Vault",
         href: "/dashboard/vault",
-        icon: <LayoutGrid className="w-5 h-5" />,
-        activeColor: "bg-primary",
+        icon: <FolderArchive className="w-4 h-4" />,
         countKey: "noteCount",
       },
       {
-        label: "Drafts",
-        href: "/dashboard/drafts",
-        icon: <FileEdit className="w-5 h-5" />,
-        activeColor: "bg-orange-400",
+        label: "Study",
+        href: "/dashboard/study",
+        icon: <Sparkles className="w-4 h-4" />,
+        subItems: [
+          {
+            label: "AI Tutor",
+            href: "/dashboard/study",
+            icon: <Bot className="w-3.5 h-3.5" />,
+            checkType: "exact",
+          },
+          {
+            label: "Quizzes",
+            href: "/dashboard/study/quizzes",
+            icon: <HelpCircle className="w-3.5 h-3.5" />,
+          },
+          {
+            label: "Flashcards",
+            href: "/dashboard/flashcards",
+            icon: <Layers className="w-3.5 h-3.5" />,
+          },
+          {
+            label: "Practice",
+            href: "/dashboard/study/practice",
+            icon: <Brain className="w-3.5 h-3.5" />,
+          },
+        ],
+      },
+      {
+        label: "Review",
+        href: "/dashboard/review",
+        icon: <RotateCcw className="w-4 h-4" />,
+      },
+      {
+        label: "Progress",
+        href: "/dashboard/progress",
+        icon: <BarChart3 className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    section: "Workspace & History",
+    links: [
+      {
+        label: "Workspace",
+        href: "/dashboard/workspace",
+        icon: <PenLine className="w-4 h-4" />,
         countKey: "draftCount",
-        isDraft: true,
       },
       {
         label: "Recent",
         href: "/dashboard/recent",
-        icon: <Clock className="w-5 h-5" />,
-        activeColor: "bg-primary",
+        icon: <Clock className="w-4 h-4" />,
       },
       {
         label: "Recently Deleted",
         href: "/dashboard/recently-deleted",
-        icon: <Trash2 className="w-5 h-5" />,
-        activeColor: "bg-destructive",
+        icon: <Trash2 className="w-4 h-4" />,
         countKey: "deletedCount",
-      },
-    ],
-  },
-  {
-    section: "Library",
-    links: [
-      {
-        label: "Subjects",
-        href: "/dashboard/library/subjects",
-        icon: <BookOpen className="w-5 h-5" />,
-        activeColor: "bg-primary",
-      },
-      {
-        label: "Tags",
-        href: "/dashboard/library/tags",
-        icon: <Tag className="w-5 h-5" />,
-        activeColor: "bg-primary",
-      },
-      {
-        label: "Semesters",
-        href: "/dashboard/library/semesters",
-        icon: <GraduationCap className="w-5 h-5" />,
-        activeColor: "bg-primary",
-      },
-    ],
-  },
-  {
-    section: "Study",
-    links: [
-      {
-        label: "Study AI",
-        href: "/dashboard/study",
-        icon: <MessageSquare className="w-5 h-5" />,
-        activeColor: "bg-primary",
-        checkType: "startsWith",
-      },
-      {
-        label: "Focus Mode",
-        href: "/dashboard/focus-mode",
-        icon: <Focus className="w-5 h-5" />,
-        activeColor: "bg-primary",
-      },
-      {
-        label: "Flashcards",
-        href: "/dashboard/flashcards",
-        icon: <Layers className="w-5 h-5" />,
-        activeColor: "bg-primary",
-      },
-      {
-        label: "Schedule",
-        href: "/dashboard/schedule",
-        icon: <CalendarClock className="w-5 h-5" />,
-        activeColor: "bg-primary",
-      },
-    ],
-  },
-  {
-    section: "Account",
-    links: [
-      {
-        label: "Templates",
-        href: "/dashboard/templates",
-        icon: <FileText className="w-5 h-5" />,
-        activeColor: "bg-primary",
-      },
-      {
-        label: "Settings",
-        href: "/dashboard/settings",
-        icon: <Settings className="w-5 h-5" />,
-        activeColor: "bg-primary",
       },
     ],
   },
