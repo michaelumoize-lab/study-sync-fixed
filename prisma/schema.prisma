@@ -7,6 +7,111 @@ datasource db {
 }
 
 // ===========================================================================
+// 0. DOMAIN ENUMS
+// ===========================================================================
+
+enum MaterialType {
+  PDF
+  SLIDES
+  YOUTUBE
+  AUDIO
+  WEB
+  NOTE
+}
+
+enum MaterialStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum ConceptRelationshipType {
+  PREREQUISITE
+  DEPENDS_ON
+  RELATED
+  EXAMPLE_OF
+  CONTRASTS_WITH
+  PART_OF
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+  CODE
+  NUMERIC
+}
+
+enum FsrsState {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
+
+enum StudyTaskType {
+  SPACED_REVIEW
+  GAP_STUDY
+  QUIZ
+  PRACTICE
+  MOCK_EXAM
+}
+
+enum StudyTaskReasonType {
+  CONCEPT_GAP
+  SPACED_DECAY
+  EXAM_PROXIMITY
+  MANUAL
+}
+
+enum GoalTargetType {
+  GRADE
+  CONCEPT_MASTERY
+  TOPIC_COMPLETION
+}
+
+enum ErrorCategory {
+  CONCEPT_GAP
+  CALCULATION
+  MISREAD
+  RECALL_FAILURE
+}
+
+enum StudySessionMode {
+  TUTOR
+  QUIZ
+  PRACTICE
+  EXPLAIN
+}
+
+enum StudySessionEventType {
+  STARTED
+  CONCEPT_VIEWED
+  QUESTION_ANSWERED
+  FLASHCARD_REVIEWED
+  HINT_REQUESTED
+  MATERIAL_OPENED
+  COMPLETED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum NoteStatus {
+  ACTIVE
+  DRAFT
+  DELETED
+}
+
+enum GenerationRunStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+// ===========================================================================
 // 1. AUTHENTICATION (Better Auth - Preserved Exactly)
 // ===========================================================================
 
@@ -148,8 +253,9 @@ model Course {
   learningGoals  LearningGoal[]
   studySessions  StudySession[]
 
-  @@unique([userId, name])
+  @@unique([userId, semesterId, name])
   @@index([userId])
+  @@index([userId, name])
   @@index([userId, semesterId])
   @@map("courses")
 }
@@ -173,20 +279,20 @@ model CourseUnit {
 }
 
 model VaultMaterial {
-  id         String    @id @default(uuid())
+  id         String         @id @default(uuid())
   userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId   String?
-  course     Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  course     Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
   title      String
-  type       String // "pdf" | "slides" | "youtube" | "audio" | "web" | "note"
+  type       MaterialType
   sourceUrl  String?
   storageKey String?
-  status     String    @default("ready") // "processing" | "ready" | "failed"
+  status     MaterialStatus @default(READY)
   metadata   Json? // pageCount, durationSeconds, videoId, etc.
   deletedAt  DateTime? // Soft-delete
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   chunks           MaterialChunk[]
   conceptMaterials ConceptMaterial[]
@@ -209,8 +315,10 @@ model MaterialChunk {
   embedding        Unsupported("vector(1536)")?
   createdAt        DateTime                     @default(now())
 
-  conceptMaterials ConceptMaterial[]
-  questionSources  QuestionSource[]
+  conceptMaterials  ConceptMaterial[]
+  questionSources   QuestionSource[]
+  generationSources GenerationRunSource[]
+  messageCitations  MessageCitation[]
 
   @@index([materialId])
   @@index([materialId, chunkIndex])
@@ -243,14 +351,14 @@ model Concept {
 }
 
 model ConceptRelationship {
-  id               String   @id @default(uuid())
+  id               String                  @id @default(uuid())
   fromConceptId    String
-  fromConcept      Concept  @relation("FromConcept", fields: [fromConceptId], references: [id], onDelete: Cascade)
+  fromConcept      Concept                 @relation("FromConcept", fields: [fromConceptId], references: [id], onDelete: Cascade)
   toConceptId      String
-  toConcept        Concept  @relation("ToConcept", fields: [toConceptId], references: [id], onDelete: Cascade)
-  relationshipType String // "prerequisite" | "depends_on" | "related" | "example_of" | "contrasts_with" | "part_of"
-  weight           Float    @default(1.0)
-  createdAt        DateTime @default(now())
+  toConcept        Concept                 @relation("ToConcept", fields: [toConceptId], references: [id], onDelete: Cascade)
+  relationshipType ConceptRelationshipType
+  weight           Float                   @default(1.0)
+  createdAt        DateTime                @default(now())
 
   @@unique([fromConceptId, toConceptId, relationshipType])
   @@index([fromConceptId])
@@ -274,23 +382,48 @@ model ConceptMaterial {
 }
 
 // ===========================================================================
-// 3. LEARNING CONTENT
+// 3. LEARNING CONTENT & AI PROVENANCE
 // ===========================================================================
 
 model QuestionGenerationRun {
-  id            String   @id @default(uuid())
-  courseId      String
-  conceptId     String?
-  model         String
-  promptVersion String
-  sourceContext Json?
-  generatedAt   DateTime @default(now())
+  id               String              @id @default(uuid())
+  courseId         String
+  conceptId        String?
+  model            String // e.g. "groq/llama-3.3-70b-versatile" or "gpt-4o"
+  promptTemplate   String?
+  promptHash       String? // SHA-256 hash of input prompt for reproducibility & audit
+  temperature      Float               @default(0.7)
+  topP             Float?
+  promptTokens     Int?
+  completionTokens Int?
+  totalCostUsd     Float?
+  latencyMs        Int?
+  status           GenerationRunStatus @default(COMPLETED)
+  errorMessage     String?
+  sourceContext    Json? // Snapshot of context payload for fast replay
+  generatedAt      DateTime            @default(now())
 
   questions QuizQuestion[]
+  sources   GenerationRunSource[]
 
   @@index([courseId])
   @@index([conceptId])
   @@map("question_generation_runs")
+}
+
+model GenerationRunSource {
+  id              String                @id @default(uuid())
+  generationRunId String
+  generationRun   QuestionGenerationRun @relation(fields: [generationRunId], references: [id], onDelete: Cascade)
+  chunkId         String
+  chunk           MaterialChunk         @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  relevanceScore  Float?
+  createdAt       DateTime              @default(now())
+
+  @@unique([generationRunId, chunkId])
+  @@index([generationRunId])
+  @@index([chunkId])
+  @@map("generation_run_sources")
 }
 
 model QuizQuestion {
@@ -302,7 +435,7 @@ model QuizQuestion {
   generationRunId  String?
   generationRun    QuestionGenerationRun? @relation(fields: [generationRunId], references: [id], onDelete: SetNull)
   questionText     String
-  questionType     String // "multiple_choice" | "short_answer" | "code" | "numeric"
+  questionType     QuestionType
   options          Json? // [{ id: "a", text: "...", isCorrect: true }]
   explanation      String
   difficultyRating Float                  @default(0.5) // 0.1 to 1.0
@@ -321,16 +454,18 @@ model QuizQuestion {
 }
 
 model QuestionSource {
-  id         String         @id @default(uuid())
-  questionId String
-  question   QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  materialId String
-  material   VaultMaterial  @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  chunkId    String?
-  chunk      MaterialChunk? @relation(fields: [chunkId], references: [id], onDelete: SetNull)
-  pageNumber Int?
-  startChar  Int?
-  endChar    Int?
+  id             String         @id @default(uuid())
+  questionId     String
+  question       QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  materialId     String
+  material       VaultMaterial  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  chunkId        String?
+  chunk          MaterialChunk? @relation(fields: [chunkId], references: [id], onDelete: SetNull)
+  pageNumber     Int?
+  startChar      Int?
+  endChar        Int?
+  relevanceScore Float?
+  quotedSnippet  String?
 
   @@index([questionId])
   @@index([materialId])
@@ -349,7 +484,7 @@ model Flashcard {
   back      String
 
   // FSRS spaced repetition state
-  fsrsState     String    @default("new") // "new" | "learning" | "review" | "relearning"
+  fsrsState     FsrsState @default(NEW)
   stability     Float     @default(0.0)
   difficulty    Float     @default(0.0)
   elapsedDays   Int       @default(0)
@@ -409,23 +544,23 @@ model StudyPlan {
 }
 
 model StudyTask {
-  id               String     @id @default(uuid())
+  id               String               @id @default(uuid())
   userId           String
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId           String?
-  plan             StudyPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  plan             StudyPlan?           @relation(fields: [planId], references: [id], onDelete: SetNull)
   courseId         String?
-  course           Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  course           Course?              @relation(fields: [courseId], references: [id], onDelete: SetNull)
   conceptId        String?
-  concept          Concept?   @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  concept          Concept?             @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   title            String
-  taskType         String // "spaced_review" | "gap_study" | "quiz" | "practice" | "mock_exam"
-  reasonType       String? // "concept_gap" | "spaced_decay" | "exam_proximity" | "manual"
+  taskType         StudyTaskType
+  reasonType       StudyTaskReasonType?
   reasonData       Json? // e.g. { mastery: 0.32, examDaysAway: 8 }
-  priorityScore    Float      @default(1.0)
+  priorityScore    Float                @default(1.0)
   estimatedMinutes Int
   scheduledDate    DateTime
-  isCompleted      Boolean    @default(false)
+  isCompleted      Boolean              @default(false)
   completedAt      DateTime?
 
   @@index([userId])
@@ -436,16 +571,16 @@ model StudyTask {
 }
 
 model LearningGoal {
-  id          String    @id @default(uuid())
+  id          String         @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId    String?
-  course      Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  course      Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
   title       String
-  targetType  String // "grade" | "concept_mastery" | "topic_completion"
+  targetType  GoalTargetType
   targetValue Float? // e.g. 90.0
   deadline    DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime       @default(now())
 
   @@index([userId])
   @@index([courseId])
@@ -483,6 +618,7 @@ model Misconception {
   createdAt   DateTime @default(now())
 
   userMisconceptions UserMisconception[]
+  questionAttempts   QuestionAttempt[]
 
   @@index([conceptId])
   @@map("misconceptions")
@@ -507,25 +643,28 @@ model UserMisconception {
 }
 
 model QuestionAttempt {
-  id            String       @id @default(uuid())
-  userId        String
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questionId    String
-  question      QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  conceptId     String
-  concept       Concept      @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-  response      Json // e.g. { type: "multiple_choice", optionId: "b" } or { type: "code", code: "..." }
-  isCorrect     Boolean
-  score         Float        @default(0.0) // 0.0 to 1.0
-  timeSpentMs   Int
-  confidence    Float?
-  errorCategory String? // "concept_gap" | "calculation" | "misread" | "recall_failure"
-  aiDiagnosis   String?
-  attemptedAt   DateTime     @default(now())
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  conceptId       String
+  concept         Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  misconceptionId String?
+  misconception   Misconception? @relation(fields: [misconceptionId], references: [id], onDelete: SetNull)
+  response        Json // e.g. { type: "multiple_choice", optionId: "b" } or { type: "code", code: "..." }
+  isCorrect       Boolean
+  score           Float          @default(0.0) // 0.0 to 1.0
+  timeSpentMs     Int
+  confidence      Float?
+  errorCategory   ErrorCategory?
+  aiDiagnosis     String?
+  attemptedAt     DateTime       @default(now())
 
   @@index([userId])
   @@index([questionId])
   @@index([conceptId])
+  @@index([misconceptionId])
   @@index([userId, attemptedAt])
   @@map("question_attempts")
 }
@@ -540,8 +679,8 @@ model FlashcardReview {
   scheduledAt    DateTime
   reviewedAt     DateTime  @default(now())
   responseTimeMs Int
-  previousState  String
-  newState       String
+  previousState  FsrsState
+  newState       FsrsState
 
   @@index([flashcardId])
   @@index([userId])
@@ -566,14 +705,14 @@ model ExamReadinessSnapshot {
 }
 
 model StudySessionEvent {
-  id        String       @id @default(uuid())
+  id        String                @id @default(uuid())
   sessionId String
-  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session   StudySession          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String // "started" | "concept_viewed" | "question_answered" | "flashcard_reviewed" | "hint_requested" | "material_opened" | "completed"
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      StudySessionEventType
   metadata  Json?
-  createdAt DateTime     @default(now())
+  createdAt DateTime              @default(now())
 
   @@index([sessionId])
   @@index([userId])
@@ -586,19 +725,19 @@ model StudySessionEvent {
 // ===========================================================================
 
 model StudySession {
-  id           String      @id @default(uuid())
+  id           String           @id @default(uuid())
   userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId     String?
-  course       Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  course       Course?          @relation(fields: [courseId], references: [id], onDelete: SetNull)
   courseUnitId String?
-  courseUnit   CourseUnit? @relation(fields: [courseUnitId], references: [id], onDelete: SetNull)
+  courseUnit   CourseUnit?      @relation(fields: [courseUnitId], references: [id], onDelete: SetNull)
   conceptId    String?
-  concept      Concept?    @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  concept      Concept?         @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   title        String?
-  mode         String      @default("tutor") // "tutor" | "quiz" | "practice" | "explain"
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  mode         StudySessionMode @default(TUTOR)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   messages StudyMessage[]
   events   StudySessionEvent[]
@@ -610,16 +749,33 @@ model StudySession {
 }
 
 model StudyMessage {
-  id        String       @id @default(uuid())
-  sessionId String
-  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  role      String // "user" | "assistant" | "system"
-  content   String
-  citations Json? // [{ materialId, chunkId, pageNumber, snippet }]
-  createdAt DateTime     @default(now())
+  id           String            @id @default(uuid())
+  sessionId    String
+  session      StudySession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role         MessageRole
+  content      String
+  citations    Json? // [{ materialId, chunkId, pageNumber, snippet }]
+  citationsRel MessageCitation[]
+  createdAt    DateTime          @default(now())
 
   @@index([sessionId])
   @@map("study_messages")
+}
+
+model MessageCitation {
+  id             String        @id @default(uuid())
+  messageId      String
+  message        StudyMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  chunkId        String
+  chunk          MaterialChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  relevanceScore Float?
+  snippet        String?
+  pageNumber     Int?
+  createdAt      DateTime      @default(now())
+
+  @@index([messageId])
+  @@index([chunkId])
+  @@map("message_citations")
 }
 
 // ===========================================================================
@@ -627,21 +783,21 @@ model StudyMessage {
 // ===========================================================================
 
 model Note {
-  id           String    @id @default(uuid())
+  id           String     @id @default(uuid())
   userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   semesterId   String?
-  semester     Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+  semester     Semester?  @relation(fields: [semesterId], references: [id], onDelete: SetNull)
   title        String
   content      String?
   draftTitle   String?
   draftContent String?
-  hasDraft     Boolean   @default(false)
-  status       String    @default("active") // "active" | "draft" | "deleted"
-  isPinned     Boolean   @default(false)
+  hasDraft     Boolean    @default(false)
+  status       NoteStatus @default(ACTIVE)
+  isPinned     Boolean    @default(false)
   deletedAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   noteTags NoteTag[]
 

@@ -1,7 +1,12 @@
-import Hero from "@/components/Home/Hero";
+import Navbar from "@/components/landing/navbar";
+import Hero from "@/components/landing/hero";
 import Footer from "@/components/Home/Footer";
-import Features from "@/components/Home/Features";
+import Features from "@/components/landing/features";
+import AITutor from "@/components/landing/ai-tutor";
+import AdaptiveLearning from "@/components/landing/adaptive-learning";
 import HowItWorks from "@/components/Home/HowItWorks";
+import ScrollToTop from "@/components/Shared/ScrollToTop";
+import { getServerSession } from "@/lib/get-session";
 import { Metadata } from "next";
 
 const baseUrl =
@@ -55,13 +60,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getServerSession();
+
   return (
-    <div>
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <Footer />
-    </div>
+    <>
+      <ScrollToTop />
+      <Navbar session={session} />
+      <main>
+        <Hero />
+        <Features />
+        <AITutor />
+        <AdaptiveLearning />
+        <HowItWorks />
+        <Footer />
+      </main>
+    </>
   );
 }

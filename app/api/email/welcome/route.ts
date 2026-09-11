@@ -65,7 +65,7 @@ function getWelcomeEmailHtml(name: string): string {
 <meta name="x-apple-disable-message-reformatting">
 <title>Welcome to StudySync</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
   * { box-sizing: border-box; }
 
@@ -73,7 +73,7 @@ function getWelcomeEmailHtml(name: string): string {
     margin: 0;
     padding: 0;
     background-color: #0a0a0a;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
   }

@@ -66,7 +66,7 @@
 
 ## 🚨 The Core Problem
 
-Modern students and lifelong learners are drowning in a disjointed landscape of disconnected productivity and study tools:
+Modern student and lifelong learners are drowning in a disjointed landscape of disconnected productivity and study tools:
 
 * 📑 **PDFs and slides** get buried in Google Drive folders or local downloads.
 * 📝 **Lecture notes** live across Apple Notes, Notion, and Google Docs.

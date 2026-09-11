@@ -1,7 +1,7 @@
 // app/layout.tsx
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/Shared/ThemeProvider";
 import { PostHogProvider } from "./PostHogProvider";
 import { Toaster } from "react-hot-toast";
@@ -9,9 +9,10 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers";
 
-const geistSans = Geist({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-outfit",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -76,7 +77,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", geistSans.variable, geistMono.variable)}
+      className={cn("font-sans", outfit.variable, geistMono.variable)}
     >
       <body className="font-sans antialiased custom-scrollbar">
         <PostHogProvider>
